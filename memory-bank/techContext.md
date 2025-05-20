@@ -23,6 +23,7 @@
 - `@ai-sdk/react`
 - `@ai-sdk/openai`
 - `ai`
+- `firebase`
 - `react-markdown`
 - `react-syntax-highlighter`
 - `shadcn-ui` (and its dependencies like `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`)
@@ -34,5 +35,5 @@
 - **Video Metadata:** Social Media Video Downloader API from RapidAPI ([https://rapidapi.com/emmanueldavidyou/api/social-media-video-downloader](https://rapidapi.com/emmanueldavidyou/api/social-media-video-downloader)) for Instagram and TikTok videos. Requires `RAPIDAPI_KEY` environment variable.
 
 ## 6. Future Planned Integrations
-- **User Authentication:** Firebase Authentication (planned for Phase 3).
-- **Data Persistence:** Firestore for user-specific data like chat history, recently viewed videos (planned for Phase 3). 
+- **User Authentication:** Firebase Authentication (Implementation in progress).
+- **Data Persistence:** Firestore for user-specific data (Implementation in progress). 

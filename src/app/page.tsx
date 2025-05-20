@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image'; // Added Image import
 import { AppProvider, useAppContext } from '@/contexts/AppContext'; // Ensure this path is correct for your setup
 import { Pencil, GraduationCap, Code, Briefcase, Lightbulb } from 'lucide-react'; // Import icons
 
@@ -40,11 +41,24 @@ const DiscoveryView = () => {
       {/* Section 1: Centered Hero/Search */}
       <div className="w-full flex flex-col items-center justify-center text-center p-4 sm:p-6">
         <div className="w-full max-w-3xl space-y-6">
+          
+          {/* Gen.C Logo Image - Moved above H1 and added rounded corners */}
+          <div className="mb-4"> {/* Adjusted margin to mb-4, can be fine-tuned */}
+            <Image 
+              src="/gen-c-logo.png" 
+              alt="Gen.C Logo - The Content Generation System" 
+              width={360} // Increased from 300
+              height={240} // Increased from 200
+              className="mx-auto rounded-lg" // Added rounded-lg
+              priority 
+            />
+          </div>
+
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
             What will you <span className="text-primary">Script Today</span>?
           </h1>
 
-          <div className="w-full max-w-[638px] mx-auto"> {/* Increased width to 638px */}
+          <div className="w-full max-w-[638px] mx-auto">
             <SearchInput />
           </div>
           {/* Add TabBar component here */}

@@ -297,9 +297,9 @@ const ThemedInputArea: React.FC<ThemedInputAreaProps> = React.forwardRef<HTMLDiv
                             >
                               {activeSegment === 'analyzer' && (
                                 <div
-                                  className={`pointer-events-none absolute inset-0 block rounded-lg border shadow-[0_1px_3px_0] 
+                                  className={`pointer-events-none absolute inset-0 block rounded-lg border 
                                               transition-colors duration-300 group-focus-visible/segmented-control:border-dashed
-                                              ${activeSegmentBgClass} ${activeSegmentBorderClass} shadow-${accentColor}/30 dark:shadow-${darkAccentColor}/10`}
+                                              ${activeSegmentBgClass} ${activeSegmentBorderClass}`}
                                   style={{ opacity: 1 }}
                                 />
                               )}
@@ -321,9 +321,9 @@ const ThemedInputArea: React.FC<ThemedInputAreaProps> = React.forwardRef<HTMLDiv
                             >
                                {activeSegment === 'aiwriter' && (
                                 <div
-                                  className={`pointer-events-none absolute inset-0 block rounded-lg border shadow-[0_1px_3px_0] 
+                                  className={`pointer-events-none absolute inset-0 block rounded-lg border 
                                               transition-colors duration-300 group-focus-visible/segmented-control:border-dashed
-                                              ${activeSegmentBgClass} ${activeSegmentBorderClass} shadow-${accentColor}/30 dark:shadow-${darkAccentColor}/10`}
+                                              ${activeSegmentBgClass} ${activeSegmentBorderClass}`}
                                   style={{ opacity: 1 }}
                                 />
                               )}

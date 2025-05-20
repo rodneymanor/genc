@@ -3,7 +3,12 @@
 ## 1. What Works (Current State)
 - Initial Memory Bank structure created and populated with the project plan.
 - Core dependencies for AI and Markdown installed.
+- `firebase` SDK installed.
+- `src/lib/firebase.ts` created for Firebase initialization.
+- `src/contexts/AuthContext.tsx` created for authentication state management.
+- `src/lib/firestore.ts` created for Firestore CRUD operations.
 - Environment variables for API keys assumed to be configured by the user.
+- User prompted to update `.env.example` and `.env.local` with Firebase config.
 - Initial project directory structure created.
 - Application logo updated to the letter "C" (Poppins, Bold) in the `AppHeader.tsx` component.
 - Application logo updated to the letter "C" (Poppins, Bold) in the `AppSidebar.tsx` component.
@@ -23,14 +28,15 @@
     - Refined v0.dev-inspired styling for the chat interface.
 - **Phase 3 (Advanced Features & Optimization):**
     - Persistent app header and navigation elements (back button, breadcrumbs).
-    - State management for recently viewed videos, chat history persistence.
+    - State management for recently viewed videos, chat history persistence (some groundwork laid with Firestore utils).
     - Advanced error handling and empty states.
     - Performance optimizations (lazy loading, virtualization).
     - Full accessibility review and implementation.
 
 ## 3. Current Status
+- **Firebase Integration: IN PROGRESS**
 - **Phase 1 - Project Setup & Configuration: COMPLETED**
-- Commencing Phase 1 - Initial Component & Context Setup.
+- Commencing Phase 1 - Initial Component & Context Setup (Auth integration part of this now).
 
 ## 4. Known Issues/Blockers
 - None identified at this initial stage. 

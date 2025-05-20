@@ -13,7 +13,7 @@ const MainContent: React.FC<MainContentProps> = ({ children }) => {
         h-screen ensures it takes full viewport height, allowing internal scrolling.
         flex flex-col makes it a column flex container which helps with content distribution.
       */}
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex justify-center pt-16">
         {children}
       </div>
     </div>

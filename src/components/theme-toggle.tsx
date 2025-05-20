@@ -7,8 +7,9 @@ import { useTheme } from "next-themes";
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme();
   // Don't show in production
-  if (process.env.NODE_ENV === "production") return null;
-  return (
+  // if (process.env.NODE_ENV === "production") return null; // Keep this line commented out or remove
+  return null; // Always return null to effectively remove the button
+  /*
     <Button
       variant="ghost"
       size="icon"
@@ -19,5 +20,5 @@ export function ThemeToggle() {
       <Moon className="hidden h-5 w-5 dark:block" />
       <span className="sr-only">Toggle theme</span>
     </Button>
-  );
+  */
 }

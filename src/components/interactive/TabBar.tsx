@@ -1,5 +1,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // Interface for individual tab data
 export interface TabItem {
@@ -20,17 +22,10 @@ export interface TabBarProps {
 
   // --- Styling Props ---
 
-  /** Tailwind class for the overall background of the tab bar container `<ul>`. Default: "bg-transparent" */
+  /** Tailwind class for the overall background of the tab bar container `<ul>`. Default: "flex flex-wrap justify-center w-full gap-2" */
   containerClassName?: string;
 
-  /** Base Tailwind classes to apply to each tab button. */
-  tabBaseClassName?: string;
-  /** Additional Tailwind classes for each non-active, non-disabled tab button. */
-  tabIdleClassName?: string;
-  /** Additional Tailwind classes for a disabled tab button. */
-  tabDisabledClassName?: string;
-
-  // --- Color Props (accept Tailwind color names like "blue-500", full classes like "bg-blue-500", or hex codes like "#3B82F6") ---
+  // Color Props (accept Tailwind color names like "blue-500", full classes like "bg-blue-500", or hex codes like "#3B82F6")
 
   // Idle Tab State
   /** Background color for idle tabs. Default: "slate-100" */
@@ -65,56 +60,14 @@ export interface TabBarProps {
   tabFontSize?: string;
 }
 
-interface ColorOutput {
-  className: string;
-  style: React.CSSProperties;
-}
-
 /**
- * Helper function to generate Tailwind class and style for a color property.
- * @param value - The color value (Tailwind name, full class, or hex code).
- * @param twPrefix - The Tailwind prefix (e.g., "bg", "text", "border", "ring").
- * @param cssVarName - The CSS variable name to use for hex codes.
- * @param statePrefix - Optional state prefix like "hover:", "focus:".
- * @returns Object with className and style properties.
- */
-const getColorConfig = (
-  value: string | undefined,
-  twPrefix: string,
-  cssVarName: string,
-  statePrefix: string = ''
-): ColorOutput => {
-  if (!value) return { className: '', style: {} };
-
-  const fullTwPrefix = statePrefix + twPrefix;
-
-  if (value.startsWith("#") || value.startsWith("rgb") || value.startsWith("hsl")) {
-    return {
-      className: `${fullTwPrefix}-[var(${cssVarName})]`,
-      style: { [cssVarName]: value } as React.CSSProperties,
-    };
-  } else {
-    // Allows "blue-500" or "bg-blue-500" (or "hover:bg-blue-500" if statePrefix is passed correctly)
-    if (value.startsWith(twPrefix + '-') || value.startsWith(statePrefix + twPrefix + '-')) {
-      return { className: value.startsWith(statePrefix) ? value : statePrefix + value, style: {} };
-    }
-    return { className: `${fullTwPrefix}-${value}`, style: {} };
-  }
-};
-
-/**
- * A reusable tab bar component with flexible theming.
+ * A reusable tab bar component with flexible theming using Shadcn UI Buttons.
  */
 const TabBar: React.FC<TabBarProps> = ({
   tabs,
   onTabClick,
   ariaLabel = "Tab navigation",
   containerClassName = "flex flex-wrap justify-center w-full gap-2",
-
-  // Base classes for all buttons
-  tabBaseClassName = "inline-flex items-center justify-center relative shrink-0 select-none active:scale-[0.995] ease-in-out group will-change-transform transition-all line-clamp-1 overflow-hidden focus:outline-none",
-  tabIdleClassName = "",
-  tabDisabledClassName = "opacity-50 cursor-not-allowed pointer-events-none",
 
   // Default color props
   idleBackgroundColor = "slate-100",
@@ -141,70 +94,93 @@ const TabBar: React.FC<TabBarProps> = ({
       aria-label={ariaLabel}
       aria-orientation="horizontal"
     >
-      {tabs.map((tab, index) => {
-        const isDisabled = tab.disabled || false;
-
-        let buttonClasses: string[] = [
-          tabBaseClassName,
+      {tabs.map((tab) => {
+        const buttonClasses: string[] = [
+          'group',
+          'relative',
+          'shrink-0',
+          'select-none',
+          'active:scale-[0.995]',
+          'ease-in-out',
+          'will-change-transform',
+          'transition-all',
+          'line-clamp-1',
+          'overflow-hidden',
           tabPadding,
           tabRounded,
           tabFontSize,
-          'border', // Base border class, color will be applied
         ];
-        let buttonStyles: React.CSSProperties = {};
 
-        // Determine current state colors
-        const currentBg = idleBackgroundColor;
-        const currentText = idleTextColor;
-        const currentBorder = idleBorderColor;
-        const currentIcon = idleIconColor;
-
-        // --- Apply Idle/Active Colors ---
-        const bgConfig = getColorConfig(currentBg, 'bg', `--tab-${tab.id}-bg-color`);
-        buttonClasses.push(bgConfig.className);
-        Object.assign(buttonStyles, bgConfig.style);
-
-        const textConfig = getColorConfig(currentText, 'text', `--tab-${tab.id}-text-color`);
-        buttonClasses.push(textConfig.className);
-        Object.assign(buttonStyles, textConfig.style);
-
-        const borderConfig = getColorConfig(currentBorder, 'border', `--tab-${tab.id}-border-color`);
-        buttonClasses.push(borderConfig.className);
-        Object.assign(buttonStyles, borderConfig.style);
-        
-        const iconColorVarName = `--tab-${tab.id}-icon-color`;
-        const iconConfig = getColorConfig(currentIcon, 'text', iconColorVarName);
-
-        // --- Apply Hover and Click Effects (only if not disabled) ---
-        if (!isDisabled) {
-          const hoverBgConfig = getColorConfig(hoverBackgroundColor, 'bg', `--tab-${tab.id}-hover-bg-color`, 'hover:');
-          buttonClasses.push(hoverBgConfig.className);
-          Object.assign(buttonStyles, hoverBgConfig.style);
-
-          const hoverTextConfig = getColorConfig(hoverTextColor, 'text', `--tab-${tab.id}-hover-text-color`, 'hover:');
-          buttonClasses.push(hoverTextConfig.className);
-          Object.assign(buttonStyles, hoverTextConfig.style);
-
-          const hoverBorderConfig = getColorConfig(hoverBorderColor, 'border', `--tab-${tab.id}-hover-border-color`, 'hover:');
-          buttonClasses.push(hoverBorderConfig.className);
-          Object.assign(buttonStyles, hoverBorderConfig.style);
-          
-          // ADDED: Unconditional hover elevation for non-disabled tabs
-          buttonClasses.push("hover:-translate-y-px hover:shadow-md");
-
-          // ADDED: Click elevation for non-disabled tabs (works with active:scale-[0.995] from base)
-          buttonClasses.push("active:shadow-md");
-
-          const ringConfig = getColorConfig(focusRingColor, 'ring', `--tab-focus-ring-color`);
-          buttonClasses.push(`focus:ring-2 focus:ring-offset-2 ${ringConfig.className}`);
-          Object.assign(buttonStyles, ringConfig.style);
+        if (idleBackgroundColor) {
+          if (idleBackgroundColor.startsWith("#") || idleBackgroundColor.startsWith("rgb") || idleBackgroundColor.startsWith("hsl")) {
+            buttonClasses.push(`bg-[${idleBackgroundColor}]`);
+          } else {
+            buttonClasses.push(idleBackgroundColor.startsWith("bg-") ? idleBackgroundColor : `bg-${idleBackgroundColor}`);
+          }
+        }
+        if (idleTextColor) {
+          if (idleTextColor.startsWith("#") || idleTextColor.startsWith("rgb") || idleTextColor.startsWith("hsl")) {
+            buttonClasses.push(`text-[${idleTextColor}]`);
+          } else {
+            buttonClasses.push(idleTextColor.startsWith("text-") ? idleTextColor : `text-${idleTextColor}`);
+          }
+        }
+        if (idleBorderColor) {
+          buttonClasses.push('border');
+          if (idleBorderColor.startsWith("#") || idleBorderColor.startsWith("rgb") || idleBorderColor.startsWith("hsl")) {
+            buttonClasses.push(`border-[${idleBorderColor}]`);
+          } else {
+            buttonClasses.push(idleBorderColor.startsWith("border-") ? idleBorderColor : `border-${idleBorderColor}`);
+          }
+        } else {
+          buttonClasses.push('border border-transparent');
         }
 
-        // Add state-specific classes (active, disabled, or idle)
-        if (isDisabled) {
-          buttonClasses.push(tabDisabledClassName);
-        } else {
-          buttonClasses.push(tabIdleClassName);
+        if (hoverBackgroundColor) {
+          if (hoverBackgroundColor.startsWith("#") || hoverBackgroundColor.startsWith("rgb") || hoverBackgroundColor.startsWith("hsl")) {
+            buttonClasses.push(`hover:bg-[${hoverBackgroundColor}]`);
+          } else {
+            buttonClasses.push(hoverBackgroundColor.startsWith("hover:bg-") ? hoverBackgroundColor : `hover:bg-${hoverBackgroundColor}`);
+          }
+        }
+        if (hoverTextColor) {
+          if (hoverTextColor.startsWith("#") || hoverTextColor.startsWith("rgb") || hoverTextColor.startsWith("hsl")) {
+            buttonClasses.push(`hover:text-[${hoverTextColor}]`);
+          } else {
+            buttonClasses.push(hoverTextColor.startsWith("hover:text-") ? hoverTextColor : `hover:text-${hoverTextColor}`);
+          }
+        }
+        if (hoverBorderColor) {
+          buttonClasses.push('hover:border');
+          if (hoverBorderColor.startsWith("#") || hoverBorderColor.startsWith("rgb") || hoverBorderColor.startsWith("hsl")) {
+            buttonClasses.push(`hover:border-[${hoverBorderColor}]`);
+          } else {
+            buttonClasses.push(hoverBorderColor.startsWith("hover:border-") ? hoverBorderColor : `hover:border-${hoverBorderColor}`);
+          }
+        }
+        
+        if (focusRingColor) {
+          if (focusRingColor.startsWith("#") || focusRingColor.startsWith("rgb") || focusRingColor.startsWith("hsl")) {
+            buttonClasses.push(`focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[${focusRingColor}]`);
+          } else {
+            buttonClasses.push(`focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-${focusRingColor}`);
+          }
+        }
+
+        const iconSpanClasses: string[] = ['flex-shrink-0'];
+        if (idleIconColor) {
+          if (idleIconColor.startsWith("#") || idleIconColor.startsWith("rgb") || idleIconColor.startsWith("hsl")) {
+            iconSpanClasses.push(`text-[${idleIconColor}]`);
+          } else {
+            iconSpanClasses.push(idleIconColor.startsWith("text-") ? idleIconColor : `text-${idleIconColor}`);
+          }
+        }
+        if (hoverIconColor) {
+          if (hoverIconColor.startsWith("#") || hoverIconColor.startsWith("rgb") || hoverIconColor.startsWith("hsl")) {
+            iconSpanClasses.push(`group-hover:text-[${hoverIconColor}]`);
+          } else {
+            iconSpanClasses.push(hoverIconColor.startsWith("group-hover:text-") ? hoverIconColor : `group-hover:text-${hoverIconColor}`);
+          }
         }
 
         const IconComponent = tab.icon;
@@ -214,20 +190,16 @@ const TabBar: React.FC<TabBarProps> = ({
             key={tab.id}
             className="inline-block"
             role="presentation"
-            id={`category-tab-${index}`}
           >
-            <button
+            <Button
               type="button"
-              role="tab"
-              aria-disabled={isDisabled}
-              disabled={isDisabled}
-              onClick={() => !isDisabled && onTabClick(tab.id)}
-              className={buttonClasses.filter(Boolean).join(" ")}
-              style={buttonStyles}
+              variant="ghost"
+              onClick={() => onTabClick(tab.id)}
+              className={cn(buttonClasses)}
             >
               <div className="flex items-center gap-x-2">
                 {IconComponent && (
-                  <span className={`flex-shrink-0 ${iconConfig.className}`} style={iconConfig.style}>
+                  <span className={cn(iconSpanClasses)}>
                     <IconComponent size={20} aria-hidden="true" />
                   </span>
                 )}
@@ -235,13 +207,15 @@ const TabBar: React.FC<TabBarProps> = ({
                   {tab.label}
                 </span>
               </div>
-            </button>
+            </Button>
           </li>
         );
       })}
     </ul>
   );
 };
+
+export default TabBar;
 
 // --- Example Usage ---
 // const App: React.FC = () => {
@@ -312,13 +286,4 @@ const TabBar: React.FC<TabBarProps> = ({
 
 //       <footer className="mt-12 text-center text-slate-400 text-sm">
 //         <p>Tailwind CSS JIT compiler handles dynamic classes like `bg-[var(--custom-color)]` automatically.</p>
-//         <p>Ensure your `tailwind.config.js` `content` path includes your component files.</p>
-//         <p>No extensive `safelist` configuration is typically needed for this color approach.</p>
-//       </footer>
-//     </div>
-//   );
-// };
-
-// export default App; // In a real app, you'd export TabBar and use App elsewhere.
-                  // For this self-contained example, App is the main export.
-export default TabBar; 
+//         <p>Ensure your `tailwind.config.js` `content`

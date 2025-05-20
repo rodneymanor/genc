@@ -1,11 +1,17 @@
-interface MarketingLayoutProps {
+"use client";
+
+import { AuthProvider } from "@/contexts/AuthContext";
+
+interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function Layout({ children }: MarketingLayoutProps) {
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <main className="flex flex-col items-center justify-center h-screen">
-      {children}
-    </main>
+    <AuthProvider>
+      <main className="flex flex-col items-center justify-center h-screen">
+        {children}
+      </main>
+    </AuthProvider>
   );
 }
