@@ -2,37 +2,59 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppContext, VideoInfo } from '@/contexts/AppContext';
-import { fetchVideoDetailsFromRapidAPI } from '@/lib/videoApi';
+import { useAiWriterContext } from '@/contexts/AiWriterContext';
 import ThemedInputArea from '@/components/interactive/ThemedInputArea';
+import { useRouter } from 'next/navigation';
 
 const SearchInput = () => {
   console.log("[SearchInput] Component rendered");
   const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [activeSegment, setActiveSegment] = useState('analyzer');
+  const router = useRouter();
+
   const {
-    setCurrentView,
-    selectedVideo,
-    setSelectedVideo,
-    isProcessingUrl,
-    setIsProcessingUrl,
-    setProcessingUrlError,
-    triggerTranscription,
-    isTranscribing,
-    transcriptText,
-    hasJustProcessedNewUrl,
-    setHasJustProcessedNewUrl,
+    // setCurrentView,
+    // selectedVideo,
+    // setSelectedVideo,
+    // isProcessingUrl,
+    // setIsProcessingUrl,
+    // setProcessingUrlError,
+    // triggerTranscription,
+    // isTranscribing,
+    // transcriptText,
+    // hasJustProcessedNewUrl,
+    // setHasJustProcessedNewUrl,
   } = useAppContext();
 
-  const isValidUrl = (url: string): boolean => {
+  const {
+    setIsAiWriterSearchActive,
+    triggerSearch,
+    setVideoIdea
+  } = useAiWriterContext();
+
+  useEffect(() => {
+    if (activeSegment === 'aiwriter') {
+      setIsAiWriterSearchActive(true);
+    } else {
+      setIsAiWriterSearchActive(false);
+    }
+  }, [activeSegment, setIsAiWriterSearchActive]);
+
+  const isValidURL = (string: string): boolean => {
+    const trimmedString = string.trim();
+    if (!trimmedString) return false;
+
     try {
-      new URL(url);
-      return true;
-    } catch (_) {
+      const urlToTest = trimmedString.includes('://') ? trimmedString : `https://${trimmedString}`;
+      const url = new URL(urlToTest);
+      return url.protocol !== "" && url.hostname.includes('.') && url.hostname.split('.').pop()!.length >= 2;
+    } catch (err) {
       return false;
     }
   };
 
-  const getPlatformFromUrl = (url: string): VideoInfo['sourceSite'] | 'UnsupportedYouTube' | 'unknown' => {
+  const getPlatformFromUrl = (url: string): 'tiktok' | 'instagram' | 'youtube' | 'UnsupportedYouTube' | 'unknown' => {
     if (url.includes('tiktok.com')) return 'tiktok';
     if (url.includes('instagram.com')) return 'instagram';
     if (url.includes('youtube.com/shorts/')) return 'youtube';
@@ -41,19 +63,17 @@ const SearchInput = () => {
   };
 
   const handleProcessUrl = async () => {
-    console.log("[SearchInput] handleProcessUrl CALLED");
+    console.log("[SearchInput] handleProcessUrl CALLED (for video URL analysis)");
     const trimmedUrl = inputValue.trim();
     console.log("[SearchInput] trimmedUrl:", trimmedUrl);
 
     if (!trimmedUrl) {
       setError('Please enter a URL.');
-      console.log("[SearchInput] Error: No trimmedUrl");
       return;
     }
 
-    if (!isValidUrl(trimmedUrl)) {
+    if (!isValidURL(trimmedUrl)) {
       setError('Invalid URL format. Please enter a valid video URL.');
-      console.log("[SearchInput] Error: Invalid URL format");
       return;
     }
 
@@ -61,94 +81,76 @@ const SearchInput = () => {
     console.log("[SearchInput] Detected platform/validation:", platformOrValidation);
 
     if (platformOrValidation === 'UnsupportedYouTube') {
-      setError('Only YouTube Shorts, Instagram Reels, and TikTok videos are supported. Please enter a different YouTube URL.');
-      console.log("[SearchInput] Error: Unsupported YouTube video (not a Short)");
+      setError('Only YouTube Shorts, Instagram Reels, and TikTok videos are supported.');
       return;
     }
 
-    if (platformOrValidation === 'unknown' && !trimmedUrl.includes('http')) {
-        setError('Unsupported URL. Please enter a TikTok, Instagram, or YouTube Shorts video URL.');
-        console.log("[SearchInput] Error: Unsupported platform or not a URL");
+    if (platformOrValidation === 'unknown') {
+        setError('Unsupported URL. Please enter a TikTok, Instagram Reels, or YouTube Shorts video URL.');
         return;
     }
 
-    const platform = platformOrValidation as VideoInfo['sourceSite'];
-
-    console.log("[SearchInput] Validation passed. Proceeding to process URL with platform:", platform);
+    console.log("[SearchInput] Validation passed. Navigating to analysis page with URL:", trimmedUrl);
     setError(null);
-    setProcessingUrlError(null);
-    setSelectedVideo(null);
-    setIsProcessingUrl(true);
-    setCurrentView('split');
+    router.push(`/analysis?videoUrl=${encodeURIComponent(trimmedUrl)}`);
+  };
 
-    try {
-      console.log("[SearchInput] Calling fetchVideoDetailsFromRapidAPI with URL:", trimmedUrl, "and platform:", platform);
-      const videoDetails = await fetchVideoDetailsFromRapidAPI(trimmedUrl, platform);
-      
-      console.log("[SearchInput] Raw videoDetails from fetchVideoDetailsFromRapidAPI:", JSON.stringify(videoDetails, null, 2));
+  const handleAiWriterSearch = async () => {
+    console.log("[SearchInput] handleAiWriterSearch CALLED");
+    const idea = inputValue.trim();
+    if (!idea) {
+      setError('Please enter a video idea.');
+      return;
+    }
+    setError(null);
+    setVideoIdea(idea);
+    await triggerSearch(idea);
+    router.push('/ai-writer');
+  };
 
-      if (videoDetails && videoDetails.id && videoDetails.sourceUrl) {
-        console.log("[SearchInput] videoDetails are valid. Calling setSelectedVideo with:", JSON.stringify(videoDetails, null, 2));
-        setSelectedVideo(videoDetails);
-        setHasJustProcessedNewUrl(true);
-        
-        console.log("[SearchInput] Directly calling triggerTranscription with new videoDetails.");
-        triggerTranscription(videoDetails);
-
-      } else {
-        console.error("[SearchInput] Failed to fetch valid video details or missing id/sourceUrl. Details:", JSON.stringify(videoDetails, null, 2));
-        setProcessingUrlError('Failed to fetch comprehensive video details. The URL might be invalid, private, or the service is temporarily down.');
-        setIsProcessingUrl(false);
-        setHasJustProcessedNewUrl(false);
-      }
-    } catch (fetchError) {
-      console.error("[SearchInput] Error fetching video details from API:", fetchError);
-      setProcessingUrlError('An unexpected error occurred while fetching video details.');
-      setIsProcessingUrl(false);
-      setHasJustProcessedNewUrl(false);
+  const handleSubmit = () => {
+    if (activeSegment === 'aiwriter') {
+      handleAiWriterSearch();
+    } else {
+      handleProcessUrl();
     }
   };
 
-  useEffect(() => {
-    console.log("[SearchInput useEffect - Monitor] selectedVideo:", selectedVideo, "hasJustProcessedNewUrl:", hasJustProcessedNewUrl, "isTranscribing:", isTranscribing, "transcriptText:", transcriptText);
-  }, [selectedVideo, hasJustProcessedNewUrl, isTranscribing, transcriptText]);
-  
-  useEffect(() => {
-    if (isProcessingUrl && (selectedVideo || error)) {
-      console.log("[SearchInput useEffect] Clearing processing state");
-      setIsProcessingUrl(false);
-    }
-  }, [isProcessingUrl, selectedVideo, error, setIsProcessingUrl]);
-  
   const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     console.log("[SearchInput] onFormSubmit triggered by form");
     event.preventDefault();
-    handleProcessUrl();
-  };
-
-  const onButtonClick = () => {
-    console.log("[SearchInput] Process button CLICKED");
-    handleProcessUrl();
+    handleSubmit();
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-3">
       <form onSubmit={onFormSubmit} className="flex items-start w-full">
         <div className="w-full">
           <ThemedInputArea
-            textareaPlaceholder="Enter TikTok, Instagram, or YouTube Shorts URL..."
             initialValue={inputValue}
             onValueChange={(value) => {
               console.log("[SearchInput] Input onChange:", value);
               setInputValue(value);
               if (error) setError(null);
+
+              if (value.trim() === '') {
+                // Keep current segment or default to analyzer if input is cleared
+                // setActiveSegment('analyzer'); // Or let it be sticky
+              } else if (isValidURL(value)) {
+                setActiveSegment('analyzer');
+              } else {
+                setActiveSegment('aiwriter');
+              }
             }}
-            onSubmit={handleProcessUrl}
+            onSubmit={handleSubmit}
             rootClassName={`w-full ${error ? 'border-destructive' : ''}`}
             bgColor="background"
             accentColor="primary"
             borderColor={error ? "destructive" : "input"}
-            textareaId="video-url-input"
+            textareaId={activeSegment === 'aiwriter' ? "ai-writer-idea-input" : "video-url-input"}
+            showSegmentedControls={true}
+            activeSegment={activeSegment}
+            onSegmentChange={setActiveSegment}
           />
           {error && <p className="mt-1.5 text-xs text-destructive text-left">{error}</p>}
         </div>

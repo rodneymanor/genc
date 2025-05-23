@@ -1,42 +1,54 @@
 # Progress
 
 ## 1. What Works (Current State)
-- Initial Memory Bank structure created and populated with the project plan.
-- Core dependencies for AI and Markdown installed.
-- `firebase` SDK installed.
-- `src/lib/firebase.ts` created for Firebase initialization.
-- `src/contexts/AuthContext.tsx` created for authentication state management.
-- `src/lib/firestore.ts` created for Firestore CRUD operations.
-- Environment variables for API keys assumed to be configured by the user.
-- User prompted to update `.env.example` and `.env.local` with Firebase config.
-- Initial project directory structure created.
-- Application logo updated to the letter "C" (Poppins, Bold) in the `AppHeader.tsx` component.
-- Application logo updated to the letter "C" (Poppins, Bold) in the `AppSidebar.tsx` component.
+- **AI Writer (Foundation & Initial UI):**
+  - `AiWriterContext.tsx` created and expanded to manage the multi-step script generation process (source fetching, placeholder for analysis, placeholder for outline generation, user selections, final script). Includes state for `videoIdea`, `sources`, `researchAnalysis`, `scriptComponents`, `userSelectedComponents`, `finalScript`, and associated loading/error states and functions (`triggerSearch`, `analyzeAndGenerateOutlines`, `generateFinalScript`).
+  - Integration of AI Writer search with `SearchInput.tsx` on the main page (`page.tsx`):
+    - "AI Writer Search Mode" toggle added.
+    - If active, submitting an idea triggers source fetching via `/api/test-gemini-search`, navigates to `/ai-writer`, and uses `AiWriterContext` to pass data.
+  - `AiWriterPage` (`/ai-writer`) structure:
+    - Uses standard app layout (`AppSidebar`, `MainContent`).
+    - `TabsUnderlinedDemo` for "Research", "Outline", "Script" tabs.
+    - "Research" tab displays fetched `sources` as a 3x3 grid of `ClientTweetCard` components.
+    - `ThinkingTimeline.tsx` component displays during processing initiated from `SearchInput.tsx`.
+  - Supporting components created: `ClientTweetCard.tsx`, `TweetSkeleton.tsx`, `ThinkingTimeline.tsx`.
+  - API route `/api/test-gemini-search/route.ts` for fetching sources based on a video idea using Gemini and Google Custom Search.
+  - Styling updates for AI Writer tabs (Perplexity-inspired, Poppins font, increased underline/font size).
+- **Git:** All AI Writer foundation changes committed and pushed.
+- **Firebase:** Initial setup for Firebase Auth and Firestore (secondary priority).
+- **Project Setup:** Core dependencies installed, initial directory structure, Memory Bank established.
 
 ## 2. What's Left to Build (High-Level)
-- **Phase 1 (Core Functionality):**
-    - Landing page (search input, category pills).
-    - Video recommendations grid and video card display.
-    - Basic split view layout.
-    - Core video player functionality (embedding and controls).
-    - Basic AI chat interface (`VideoChat.tsx` with Vercel AI SDK, message display, text input) connecting to `app/api/chat/route.ts`.
-- **Phase 2 (Enhanced Interaction & UI Polish):**
-    - Smooth UI transitions between views.
-    - Full responsive design implementation.
-    - Implementation of the `VideoScriptGenerator.tsx` tab and `app/api/generate-script/route.ts`.
-    - Markdown rendering in chat.
-    - Refined v0.dev-inspired styling for the chat interface.
-- **Phase 3 (Advanced Features & Optimization):**
-    - Persistent app header and navigation elements (back button, breadcrumbs).
-    - State management for recently viewed videos, chat history persistence (some groundwork laid with Firestore utils).
-    - Advanced error handling and empty states.
-    - Performance optimizations (lazy loading, virtualization).
-    - Full accessibility review and implementation.
+- **AI Writer - Full Workflow Implementation:**
+  - **API Development:**
+    - Implement API route for **analyzing sources** (Input: `Source[]`, `videoIdea`; Output: `ResearchAnalysis`).
+    - Implement API route for **generating script components/outlines** (Input: `ResearchAnalysis`; Output: `ScriptComponents` - hooks, factsets, takes, outros).
+    - Implement/Refine API route for **generating final script** (Input: `UserSelectedScriptComponents`, `videoIdea`; Output: final script text).
+  - **Context (`AiWriterContext.tsx`) Integration:**
+    - Replace placeholder logic in `analyzeAndGenerateOutlines` with actual calls to the new analysis and outline generation APIs.
+    - Implement logic in `generateFinalScript` to call the final script generation API.
+  - **UI Development (`AiWriterPage.tsx`):**
+    - **"Outline" Tab:** UI to display `scriptComponents` (options for hooks, factsets, etc.), allow user selection to populate `userSelectedComponents`, handle loading/error states for this stage. UI for pre-existing templates if pursued.
+    - **"Script" Tab:** UI to display the `finalScript`, trigger `generateFinalScript`, handle loading/error states.
+    - Determine and implement the trigger mechanism for `analyzeAndGenerateOutlines` (e.g., button on "Research" tab after sources load).
+    - Comprehensive loading, error, and empty state handling throughout the AI Writer flow.
+- **Core App Features (from original brief, if not superseded by AI Writer focus):**
+    - Landing page elements (category pills, video recommendations - if still relevant).
+    - Video player integration on the right side of a split view (if this UI paradigm is maintained).
+    - AI Chat Assistant tab functionality.
+- **Firebase Integration:**
+    - Complete authentication flow (login, signup, logout).
+    - Firestore integration for user data persistence if/when needed.
+- **General UI Polish & UX:**
+    - Responsive design improvements.
+    - Accessibility review.
+    - Consistent error handling and user feedback.
 
 ## 3. Current Status
-- **Firebase Integration: IN PROGRESS**
-- **Phase 1 - Project Setup & Configuration: COMPLETED**
-- Commencing Phase 1 - Initial Component & Context Setup (Auth integration part of this now).
+- **AI Writer Feature Development: IN PROGRESS** (Foundation laid, research step functional, context expanded. Next: Analysis, Outline, Final Script APIs and UI).
+- **Firebase Integration: PAUSED** (Initial setup done, full integration deferred).
+- **Core Landing Page/Video Discovery: PAUSED/PENDING REDEFINITION** (Focus shifted to AI Writer).
 
 ## 4. Known Issues/Blockers
-- None identified at this initial stage. 
+- Precise data structure for `ResearchAnalysis` needs to be defined to align with AI model requirements for outline generation.
+- Decision on user interaction flow for triggering analysis and outline steps (manual vs. automatic). 

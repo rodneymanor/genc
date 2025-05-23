@@ -65,7 +65,17 @@ const config = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+  			textMain: '#111827',
+  			textMainDark: '#F3F4F6',
+  			textMuted: '#6B7280',
+  			textMutedDark: '#9CA3AF',
+  			linkText: '#3B82F6',
+  			linkTextDark: '#60A5FA',
+  			borderMain: '#E5E7EB',
+  			borderMainDark: '#374151',
+  			'accent-magenta': '#E6007E',
+  			'accent-cyan': '#00B8D4',
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -129,7 +139,11 @@ const config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/line-clamp"),
+  ],
 } satisfies Config;
 
 export default config;

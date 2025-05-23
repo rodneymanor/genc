@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image'; // Added Image import
-import { AppProvider, useAppContext } from '@/contexts/AppContext'; // Ensure this path is correct for your setup
+import { useAppContext } from '@/contexts/AppContext'; // AppProvider removed from imports
 import { Pencil, GraduationCap, Code, Briefcase, Lightbulb } from 'lucide-react'; // Import icons
 
 // Import View Components
@@ -93,7 +93,7 @@ const SplitView = () => {
   );
 };
 
-const MainPageInternalContent = () => { // Renamed to avoid conflict with MainContent layout component
+const MainPageInternalContent = () => {
   const { currentView } = useAppContext();
 
   return (
@@ -105,18 +105,8 @@ const MainPageInternalContent = () => { // Renamed to avoid conflict with MainCo
 };
 
 // This will be the main export for app/page.tsx
+// It no longer needs to provide AppProvider, AiWriterProvider, AppSidebar, or MainContent
+// as these are handled by the root layout (src/app/layout.tsx).
 export default function Home() {
-  return (
-    <AppProvider>
-      {/* Layout changed to flex row to accommodate sidebar */}
-      <div className="flex flex-row min-h-screen bg-background">
-        <AppSidebar />
-        <MainContent>
-          {/* BackButton moved into MainPageContent for conditional rendering */}
-          <MainPageInternalContent />
-        </MainContent>
-        {/* Footer could go here, ensure it's outside MainContent if it shouldn't have the padding */}
-      </div>
-    </AppProvider>
-  );
+  return <MainPageInternalContent />;
 } 

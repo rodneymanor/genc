@@ -1,94 +1,79 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from '@/contexts/AuthContext';
-// Assuming you might want an icon for messages, e.g., from lucide-react or your Icons component
-// import { Mail, AlertCircle, CheckCircle2 } from 'lucide-react'; 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthForm } from "@/components/login-form"; // Import the AuthForm
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For success message
+import { CheckCircle } from "lucide-react"; // For success icon
 
 export default function ForgotPasswordPage() {
   const { sendPasswordResetEmail } = useAuth();
-  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false); // To gate client-side only rendering
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  async function handleForgotPasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
-    setMessage(null);
+    setSuccessMessage(null);
+    setLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
 
     if (!email) {
-      setError('Please enter your email address.');
+      setError("Email is required.");
+      setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
       await sendPasswordResetEmail(email);
-      setMessage('Password reset email sent! Please check your inbox (and spam folder).');
+      setSuccessMessage("Password reset email sent! Please check your inbox (and spam folder).");
     } catch (err: any) {
-      setError(err.message || 'Failed to send password reset email. Please try again.');
+      console.error('Forgot Password Page handleSubmit Error:', err);
+      let errorMessage = "Failed to send password reset email. Please try again.";
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = "No user found with this email address.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }
 
+  if (!isMounted) {
+    // Render nothing or a placeholder on the server and initial client render before hydration
+    // This ensures the server and initial client render match.
+    // AuthForm itself is designed to be centered, so it should be fine as the sole top-level element after mount.
+    return null; // Or a basic loading spinner that doesn't involve complex conditional structures
+  }
+
   return (
-    <Card className="mx-auto max-w-sm">
-      <CardHeader>
-        <CardTitle className="text-xl">Forgot Password</CardTitle>
-        <CardDescription>
-          Enter your email address and we&apos;ll send you a link to reset your password.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          {error && (
-            <div className="bg-destructive/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-destructive">
-              {/* <AlertCircle className="h-4 w-4" /> */}
-              <p>{error}</p>
-            </div>
-          )}
-          {message && (
-            <div className="bg-green-500/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-green-500">
-              {/* <CheckCircle2 className="h-4 w-4" /> */}
-              <p>{message}</p>
-            </div>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading || !!message} // Disable if loading or success message is shown
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading || !!message}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </Button>
-        </form>
-        <div className="mt-4 text-center text-sm">
-          Remember your password?{" "}
-          <Link href="/login" className="underline">
-            Login
-          </Link>
+    <>
+      {successMessage && (
+        <div className="fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4 z-50">
+          <Alert variant="default" className="bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-500/50 text-green-700 dark:text-green-300">
+            <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
+            <AlertTitle className="font-semibold">Success!</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
         </div>
-      </CardContent>
-    </Card>
+      )}
+      <AuthForm 
+        mode="forgot-password"
+        onSubmit={handleForgotPasswordSubmit}
+        error={error}
+        loading={loading}
+        // The AuthForm itself has a wrapper div that centers it, so no extra div here unless needed for the Alert
+      />
+    </>
   );
 } 

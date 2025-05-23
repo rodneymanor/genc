@@ -18,43 +18,54 @@ interface TweetUser {
   verified: boolean
 }
 
-// Update the ClientTweetCardProps interface to include an analyzed property
+// Update the ClientTweetCardProps interface to include an optional tweet property
 interface ClientTweetCardProps {
-  id: string
+  id?: string // id can be optional if tweet is provided
   className?: string
   analyzed?: boolean
   onError?: (error: Error) => void
+  tweet?: TweetData // Optional tweet prop
 }
 
 // Update the ClientTweetCard component to include the url property in the placeholder tweet
-export function ClientTweetCard({ id, className, analyzed = false, onError }: ClientTweetCardProps) {
+export function ClientTweetCard({ id, className, analyzed = false, onError, tweet }: ClientTweetCardProps) {
   const [loading, setLoading] = useState(true)
 
-  // Simulate loading
+  // Simulate loading only if tweet is not provided
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1000)
+    if (!tweet) {
+      const timer = setTimeout(() => {
+        setLoading(false)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else {
+      setLoading(false);
+    }
+  }, [id, tweet])
 
-    return () => clearTimeout(timer)
-  }, [id])
-
-  if (loading) {
+  if (!tweet && loading) {
     return <TweetSkeleton className={className} />
   }
 
-  // Placeholder tweet data
-  const placeholderTweet: TweetData = {
+  const displayTweet = tweet ? tweet : {
+    // Placeholder tweet data if no tweet prop is provided
     id: id || "123456789",
     user: {
-      name: "John Doe",
-      handle: "johndoe",
-      verified: true,
+      name: "Source Provider", // Generic name
+      handle: "source",      // Generic handle
+      verified: false,
     },
-    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.",
-    url: "https://example.com/article/12345",
+    text: "No content provided.", // Default text
+    url: "#", // Default URL
     analyzed: analyzed,
+  };
+  
+  // If id is provided in props but not in tweet, ensure displayTweet.id uses the prop id.
+  // This is for cases where a tweet object is passed but we still want to key/ID it externally.
+  if (id && displayTweet.id !== id) {
+    displayTweet.id = id;
   }
 
-  return <MagicTweet tweet={placeholderTweet} className={className} />
+
+  return <MagicTweet tweet={displayTweet} className={className} />
 } 

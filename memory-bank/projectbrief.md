@@ -24,7 +24,15 @@ Users looking for a novel way to discover, consume, and interact with video cont
     -   **AI Chat & Script Generation Interface (Left Side):**
         -   Tabbed: "Chat Assistant" & "Script Generator".
         -   Chat Assistant: Vercel AI SDK (`useChat`), Markdown rendering, message history, input area. API: `app/api/chat/route.ts`.
-        -   Script Generator: `useChat` with `app/api/generate-script/route.ts`, script type selection, display area. API: `app/api/generate-script/route.ts`.
+        -   Script Generator: Multi-step process.
+            -   User inputs video idea.
+            -   System fetches ~9 relevant sources (e.g., using Google Custom Search via an API route like `app/api/test-gemini-search/route.ts`).
+            -   Sources are displayed (e.g., as cards in a "Research" tab).
+            -   System analyzes sources (details TBD, new API route needed).
+            -   System generates multiple outline options (hooks, main points/factsets, takes, CTAs/outros) based on analysis (new API route needed, e.g., `app/api/generate-script-components/route.ts`).
+            -   Users select and customize outline components in an "Outline" tab.
+            -   System generates a final script based on user selections (existing API `app/api/generate-final-script/route.ts` to be adapted).
+            -   State managed via `AiWriterContext.tsx`.
     -   **Video Player & Information (Right Side):**
         -   Embedded player (TikTok, Instagram, YouTube).
         -   Video title, description, source, share option.

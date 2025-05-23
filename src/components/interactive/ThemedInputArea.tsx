@@ -1,4 +1,5 @@
 import React, { useState, useRef, useImperativeHandle, useEffect } from 'react';
+import { SegmentedControlTabs } from './SegmentedControlTabs'; // Import the new component
 
 // Helper function to build Tailwind class strings for colors
 // Handles both Tailwind color names (e.g., "blue-500") and hex codes (e.g., "#FF0000")
@@ -153,6 +154,11 @@ export interface ThemedInputAreaProps {
   // --- Refs ---
   /** Forwarded ref to the textarea element. */
   textareaRef?: React.Ref<HTMLTextAreaElement>;
+
+  // New props for controlled component
+  activeSegment: string;
+  onSegmentChange: (segment: string) => void;
+  showSegmentedControls?: boolean;
 }
 
 // --- The Component ---
@@ -181,12 +187,14 @@ const ThemedInputArea: React.FC<ThemedInputAreaProps> = React.forwardRef<HTMLDiv
       rootClassName = "",
       textareaRef: forwardedTextareaRef,
       onSubmit,
+      activeSegment,
+      onSegmentChange,
+      showSegmentedControls = false,
     },
     ref // Ref for the root div element
   ) => {
     const [inputValue, setInputValue] = useState(initialValue);
-    const [activeSegment, setActiveSegment] = useState<'analyzer' | 'aiwriter'>('analyzer');
-    const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const internalTextareaRef = useRef<HTMLTextAreaElement>(null); // Declare internalTextareaRef
 
     // Allows the component to be used with a forwarded ref to the textarea
     useImperativeHandle(forwardedTextareaRef, () => internalTextareaRef.current as HTMLTextAreaElement);
@@ -276,68 +284,20 @@ const ThemedInputArea: React.FC<ThemedInputAreaProps> = React.forwardRef<HTMLDiv
                     </div>
 
                     {/* Segmented Control Section */}
-                    <div className={`gap-2 flex rounded-l-lg col-start-1 row-start-2 -ml-1 ${baseBgClass}`}> {/* Changed gap-sm to gap-2 */}
-                      <div className="gap-1 flex items-center"> {/* Changed gap-xs to gap-1 */}
-                        <div
-                          role="radiogroup"
-                          aria-required="false"
-                          className="group relative isolate flex h-fit focus:outline-none"
-                          tabIndex={0}
-                        >
-                          <div className="absolute inset-0 rounded-[10px] transition-colors duration-300 bg-[#E0F7FF]/70 dark:bg-[#E0F7FF]/40"></div>
-                          <div className="p-0.5 flex items-center"> {/* Changed p-two to p-0.5 */}
-                            {/* Analyzer Button (was Search) */}
-                            <button
-                              type="button"
-                              role="radio"
-                              aria-checked={activeSegment === 'analyzer'}
-                              onClick={() => setActiveSegment('analyzer')}
-                              className="segmented-control group/segmented-control relative focus:outline-none px-2.5 py-1 h-8 min-w-9" // Simplified padding
-                              tabIndex={-1}
-                            >
-                              {activeSegment === 'analyzer' && (
-                                <div
-                                  className={`pointer-events-none absolute inset-0 block rounded-lg border 
-                                              transition-colors duration-300 group-focus-visible/segmented-control:border-dashed
-                                              ${activeSegmentBgClass} ${activeSegmentBorderClass}`}
-                                  style={{ opacity: 1 }}
-                                />
-                              )}
-                              <div className="relative z-10 flex items-center justify-center gap-1"> {/* Changed gap-xs to gap-1 */}
-                                <SearchIcon className={`transition-colors duration-300 w-4 h-4 ${activeSegment === 'analyzer' ? activeSegmentTextClass : inactiveSegmentTextClass}`} />
-                                <div className={`font-sans text-sm font-medium leading-[1.125rem] transition-colors duration-300 ${activeSegment === 'analyzer' ? activeSegmentTextClass : inactiveSegmentTextClass}`}>
-                                  Analyzer
-                                </div>
-                              </div>
-                            </button>
-                            {/* AI Writer Button (was Research) */}
-                            <button
-                              type="button"
-                              role="radio"
-                              aria-checked={activeSegment === 'aiwriter'}
-                              onClick={() => setActiveSegment('aiwriter')}
-                              className="segmented-control group/segmented-control relative focus:outline-none px-2.5 py-1 h-8 min-w-9" // Simplified padding
-                              tabIndex={-1}
-                            >
-                               {activeSegment === 'aiwriter' && (
-                                <div
-                                  className={`pointer-events-none absolute inset-0 block rounded-lg border 
-                                              transition-colors duration-300 group-focus-visible/segmented-control:border-dashed
-                                              ${activeSegmentBgClass} ${activeSegmentBorderClass}`}
-                                  style={{ opacity: 1 }}
-                                />
-                              )}
-                              <div className="relative z-10 flex items-center justify-center gap-1">
-                                <ResearchIcon className={`transition-colors duration-300 w-4 h-4 ${activeSegment === 'aiwriter' ? activeSegmentTextClass : inactiveSegmentTextClass} group-hover/segmented-control:${baseTextClass}`} />
-                                <div className={`font-sans text-sm font-medium leading-[1.125rem] transition-colors duration-300 ${activeSegment === 'aiwriter' ? activeSegmentTextClass : inactiveSegmentTextClass} group-hover/segmented-control:${baseTextClass}`}>
-                                  AI Writer
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
+                    {showSegmentedControls && (
+                      <div className="pt-2 flex justify-center">
+                        <SegmentedControlTabs 
+                          value={activeSegment} 
+                          onValueChange={onSegmentChange} 
+                          activeBgLight={bgColor}      // Use main background for active light tab
+                          activeBgDark={darkBgColor}   // Use main dark background for active dark tab
+                          activeTextLight={accentColor}  // Use accent for active light text
+                          activeTextDark={darkAccentColor} // Use dark accent for active dark text
+                          inactiveTextLight={placeholderColor} // Use placeholder for inactive light text
+                          inactiveTextDark={darkPlaceholderColor} // Use dark placeholder for inactive dark text
+                        />
                       </div>
-                    </div>
+                    )}
 
                     {/* Icon Buttons Section */}
                     <div className={`flex items-center justify-self-end rounded-full col-start-3 row-start-2 -mr-1 ${baseBgClass}`}>

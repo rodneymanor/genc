@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
-    --card: 197 100% 94%;
-    --card-foreground: 0 0% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
-    --primary: 198 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 20%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 197 100% 94%;
-    --accent-foreground: 200 100% 35%;
+    --background: 255 100% 100%;
+    --foreground: 222 47% 11%;
+    --card: 255 100% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 255 100% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 188 100% 42%;
+    --primary-foreground: 255 100% 100%;
+    --secondary: 220 13% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 13% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 323 100% 45%;
+    --accent-foreground: 255 100% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 94%;
-    --input: 0 0% 94%;
-    --ring: 198 100% 50%;
+    --border: 215 20% 90%;
+    --input: 215 20% 85%;
+    --ring: 188 100% 42%;
     --radius: 0.5rem;
     --chart-1: 198 100% 50%;
     --chart-2: 200 100% 35%;
@@ -37,28 +37,29 @@
     --sidebar-accent-foreground: 200 100% 35%;
     --sidebar-border: 0 0% 94%;
     --sidebar-ring: 198 100% 50%;
+    --background-super-color-200: 28.9% 0.06 230.94;
   }
 
   .dark {
-    --background: 0 0% 20%;
-    --foreground: 0 0% 100%;
-    --card: 200 50% 20%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 20%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 198 90% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 198 90% 70%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 200 50% 25%;
-    --accent-foreground: 198 90% 70%;
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 214.9 83.2% 61.6%;
+    --primary-foreground: 220.9 39.3% 11%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 198 90% 40%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 214.9 83.2% 61.6%;
     --chart-1: 198 90% 60%;
     --chart-2: 200 80% 45%;
     --chart-3: 195 70% 40%;
@@ -72,31 +73,15 @@
     --sidebar-accent-foreground: 198 90% 70%;
     --sidebar-border: 0 0% 25%;
     --sidebar-ring: 198 90% 50%;
+    --background-super-color-200: 28.9% 0.06 230.94;
   }
+
   .theme {
     --animate-orbit: orbit calc(var(--duration)*1s) linear infinite;
   }
-}
 
-html {
-  font-family: var(--font-poppins), sans-serif;
-}
-
-@layer base {
-  :root {
-    --chart-1: 198 100% 50%;
-    --chart-2: 200 100% 35%;
-    --chart-3: 197 100% 94%;
-    --chart-4: 195 90% 50%;
-    --chart-5: 205 90% 50%;
-  }
-
-  .dark {
-    --chart-1: 198 90% 60%;
-    --chart-2: 200 80% 45%;
-    --chart-3: 195 70% 40%;
-    --chart-4: 200 60% 35%;
-    --chart-5: 205 50% 30%;
+  html {
+    @apply font-poppins;
   }
 
   * {
@@ -105,15 +90,6 @@ html {
 
   body {
     @apply bg-background text-foreground font-poppins;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 
@@ -127,3 +103,40 @@ html {
     }
   }
 }
+
+@layer utilities {
+  .border-super {
+    border: 1px solid oklch(var(--background-super-color-200) / var(--tw-border-opacity, 1));
+  }
+  .shadow-super\/30 {
+    --tw-shadow-color: oklch(var(--background-super-color-200) / 0.3);
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color); /* Example shadow, similar to shadow-md */
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+}
+
+/* AI Writer Sticky Header */
+.sticky-header {
+  position: sticky;
+  top: 0; /* Adjust if you have a global navbar above this */
+  width: 100%;
+  background-color: oklch(var(--background)); /* Or your specific header background */
+  /* Consider adding a subtle shadow when sticky, if desired */
+  /* box-shadow: 0 2px 4px rgba(0,0,0,0.05); */
+  transition: background-color 0.3s ease-in-out; /* Removed padding transition */
+  z-index: 40; /* Ensure it's above other content but below modals etc. */
+}
+
+.sticky-header .header-content-wrapper {
+  /* transition: padding 0.3s ease-in-out; No longer needed */
+  padding-top: 0.75rem; /* Corresponds to pt-3 */
+  padding-bottom: 0;
+}
+
+/* Removed all .sticky-header.shrunk specific styles */
+
+/* Ensure the body/main scroll container has enough padding if the header is truly fixed on top of it */
+/* body, .main-scroll-container {
+  padding-top: YOUR_HEADER_INITIAL_HEIGHT; 
+}
+*/
