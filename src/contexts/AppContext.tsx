@@ -13,6 +13,8 @@ export interface VideoInfo {
   description?: string;
   sourceSite?: 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'unknown';
   duration?: string; // e.g., "2:35"
+  authorUsername?: string; // Added authorUsername
+  audioUrl?: string; // Added for direct audio link
   // Add other relevant fields from RapidAPI or other sources
 }
 

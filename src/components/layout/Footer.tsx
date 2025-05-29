@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 
 const Footer = () => {
   return (
-    <footer className="w-full py-6 text-center border-t border-border mt-auto bg-background">
+    <footer className="w-full py-6 text-center border-t border-border mt-auto bg-background shrink-0">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground md:justify-start">

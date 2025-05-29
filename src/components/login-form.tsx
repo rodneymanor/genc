@@ -35,10 +35,10 @@ export function AuthForm({
   onSubmit, // This onSubmit is for the form
   error,
   loading,
-  logoSrc = "/gen-c-logo.png", 
-  logoAlt = "Gen.C Logo",
-  logoWidth = 180,
-  logoHeight = 40,
+  logoSrc = "/scribo-logo.png", 
+  logoAlt = "Scribo Logo",
+  logoWidth = 120,
+  logoHeight = 30,
   // Removed ...props as we are not extending HTMLAttributes directly for AuthFormProps
 }: AuthFormProps) {
   let title = "Login";

@@ -1,0 +1,197 @@
+/* src/styles/perplexity-sidebar.css */
+
+/* Ensure this targets the root element of your PerplexitySidebar component if it doesn't have the .perplexity-sidebar class directly */
+.perplexity-sidebar,
+.perplexity-sidebar .ps-sidebar-container {
+  font-family: var(--font-poppins), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  /* Use CSS variables from your globals.css for background and border */
+  /* The example uses rgba with backdrop-filter. We'll use solid colors for now and can add blur later if needed. */
+  background-color: hsl(var(--sidebar-background));
+  border-right: 1px solid hsl(var(--sidebar-border));
+  color: hsl(var(--sidebar-foreground));
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  min-height: 100dvh; /* Primary modern approach */
+  height: -webkit-fill-available; /* iOS Safari */
+  height: -moz-available;          /* Firefox (older) */
+  height: auto; /* Fallback and ensures it can grow if content dictates and not otherwise constrained */
+  display: flex;
+  flex-direction: column;
+  /* Default collapsed width - can be overridden by collapsedWidth prop on Sidebar */
+  /* width: 80px;  You can set this with collapsedWidth prop in JSX for better control */
+}
+
+/* Adjust Menu and MenuItem styles to match Perplexity */
+.perplexity-sidebar .ps-menu-root {
+  padding-top: 0.5rem;
+}
+
+.perplexity-sidebar .ps-menuitem-root > .ps-menu-button {
+  color: hsl(var(--sidebar-foreground));
+  background-color: transparent !important;
+  border: none !important;
+  padding: 10px !important; /* Adjusted padding for collapsed view */
+  margin: 0 auto !important; /* Center the button content (icon) */
+  height: 44px !important; /* Fixed height for square-like appearance */
+  width: 44px !important;  /* Fixed width for square-like appearance */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.5rem !important; /* 8px, for rounded square */
+  margin-bottom: 0.5rem !important; /* Space between items */
+}
+
+/* Ensure icon is centered within the button */
+.perplexity-sidebar .ps-menuitem-root > .ps-menu-button .ps-menu-icon {
+  margin-right: 0 !important; /* Remove margin when label is hidden */
+}
+
+.perplexity-sidebar .ps-menuitem-root > .ps-menu-button:hover {
+  background-color: hsl(220 13% 85%) !important; /* Slightly darker than the new active state background */
+  color: hsl(var(--sidebar-foreground)) !important;
+}
+
+/* Active state - you might need to implement active logic via JS and apply a class */
+.perplexity-sidebar .ps-menuitem-root.ps-active > .ps-menu-button,
+.perplexity-sidebar .ps-menuitem-root > .ps-menu-button.active-item { /* Example active class */
+  background-color: hsl(220 13% 90%) !important; /* This is the current active background */
+  color: black !important; /* Font remains black */
+}
+
+/* SubMenu adjustments for collapsed state if necessary */
+.perplexity-sidebar .ps-submenu-root > .ps-menu-button {
+  /* Same styling as MenuItem */
+  padding: 10px !important;
+  margin: 0 auto !important;
+  height: 44px !important;
+  width: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.perplexity-sidebar .ps-submenu-root > .ps-menu-button .ps-menu-icon {
+  margin-right: 0 !important;
+}
+
+.perplexity-sidebar .ps-submenu-content {
+  /* Styling for submenu content when it pops out (if that's the behavior) */
+  background-color: hsl(var(--sidebar-background));
+  /* padding-left: 1rem; */ /* This might not be needed if it pops out */
+}
+
+.perplexity-sidebar .ps-menu-label {
+  /* Labels are hidden in collapsed state by react-pro-sidebar */
+  font-size: 0.875rem;
+}
+
+/* Specific styling for "New Thread" button when collapsed */
+.perplexity-sidebar .new-thread-button .ps-menu-button {
+  background-color: hsl(var(--primary) / 0.2) !important; /* Subtle primary tint */
+  color: hsl(var(--foreground)) !important; /* Changed to use foreground color (black in light mode) */
+  margin-left: auto !important; /* Center the round button */
+  margin-right: auto !important; /* Center the round button */
+  margin-top: 0.5rem !important;
+  margin-bottom: 1rem !important; 
+  border-radius: 50% !important; /* Make it round */
+  /* Ensure fixed size if not inherited properly, though general rule should cover it */
+  height: 44px !important; 
+  width: 44px !important;  
+  display: flex !important; /* Ensure flex properties for icon centering are active */
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.perplexity-sidebar .new-thread-button .ps-menu-button:hover {
+  background-color: hsl(var(--primary) / 0.4) !important; /* Slightly more prominent primary on hover */
+}
+
+/* Custom scrollbar (already in your globals.css, but good to ensure it applies if specific container) */
+.perplexity-sidebar .custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.perplexity-sidebar .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.perplexity-sidebar .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 2px;
+}
+
+.perplexity-sidebar .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.8);
+}
+
+/* Header and Footer specific styles from the component */
+/* These are applied via inline styles in the component currently, but can be moved here */
+
+/* Add styles for Profile Section items if needed */
+.perplexity-sidebar .profile-menu-item .ps-menu-button:hover {
+  background-color: hsl(var(--sidebar-accent)) !important;
+  color: hsl(var(--sidebar-accent-foreground)) !important;
+}
+
+/* Style for the "New Script" button to always appear active */
+.new-thread-button a span.ps-menu-icon,
+.new-thread-button a span.ps-menu-label {
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.new-thread-button > .ps-menu-button {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important; /* Ensures text/icon color */
+}
+
+.new-thread-button > .ps-menu-button:hover {
+  background-color: hsl(var(--primary) / 0.9) !important; /* Slightly darker on hover */
+}
+
+/* Ensure consistent spacing and border-radius if needed */
+.new-thread-button {
+  margin: 0.25rem 0.5rem !important; /* Consistent with other menu items */
+  border-radius: 0.375rem !important; /* Consistent with other menu items */
+  width: fit-content !important; /* Add this to prevent full width */
+  display: block !important; /* Or inline-block, if it helps with centering or layout */
+  margin-left: auto !important; /* Attempt to center if parent is flex/grid or block has defined width */
+  margin-right: auto !important;
+}
+
+/* Styles for the New Script button in the sidebar */
+.new-thread-button.ps-menu-button {
+  /* Reduce default left/right padding of react-pro-sidebar MenuItem button */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  
+  /* Center the icon */
+  justify-content: center !important;
+
+  /* Adjust external margins and set a fixed size */
+  margin: 0.25rem auto !important; /* 4px top/bottom, auto left/right for centering */
+  width: 44px !important; /* Fixed width for better fit */
+  height: 44px !important; /* Fixed height for better fit */
+  
+  /* Ensure the ::before and ::after pseudo-elements, if any, don't add extra space */
+  /* This is a common culprit with react-pro-sidebar for unexpected spacing */
+  /* Depending on the version and specific setup, you might not need these */
+}
+
+.new-thread-button.ps-menu-button::before,
+.new-thread-button.ps-menu-button::after {
+    content: none !important; /* Attempt to remove pseudo-elements if they cause spacing issues */
+}
+
+/* Ensure the icon inside the new-thread-button is centered */
+.new-thread-button.ps-menu-button .ps-menu-icon {
+  /* react-pro-sidebar usually handles icon centering well when padding is managed,
+     but if the icon itself has odd margins from its source or other CSS, reset them here. */
+  margin-right: 0 !important; /* Remove any default right margin from icon if present */
+  margin-left: 0 !important; /* Remove any default left margin from icon if present */
+}
+
+/* General styles for the sidebar if not already present */
+.perplexity-sidebar {
+  /* Add any other general sidebar styles here if needed */
+} 
+

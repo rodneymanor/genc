@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config = {
-  darkMode: ["class"],
+  // darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -19,8 +19,14 @@ const config = {
   	},
   	extend: {
       fontFamily: {
-        sans: ["var(--font-poppins)"],
-        poppins: ["var(--font-poppins)"],
+        sans: ["var(--font-bricolage-grotesque)"],
+        "bricolage-grotesque": ["var(--font-bricolage-grotesque)"],
+      },
+      width: {
+        'input-lg': '640px',
+      },
+      height: {
+        'input-lg': '120px',
       },
   		colors: {
   			border: 'hsl(var(--border))',
@@ -142,7 +148,6 @@ const config = {
   plugins: [
     require("tailwindcss-animate"),
     require("@tailwindcss/typography"),
-    require("@tailwindcss/line-clamp"),
   ],
 } satisfies Config;
 

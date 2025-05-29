@@ -32,7 +32,8 @@ interface AuthContextType {
   fetchUserProfile: (uid: string) => Promise<UserProfile | null>; // Add a function to explicitly fetch profile
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Export AuthContext directly
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -109,9 +110,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authUser = userCredential.user;
       console.log('AuthContext: Login successful for:', email, authUser);
       if (authUser) {
-        // Update lastLogin timestamp using updateDocument
-        await updateDocument(COLLECTIONS.USERS, authUser.uid, { lastLogin: Timestamp.now() });
-        await fetchUserProfile(authUser.uid); // Fetch profile on login
+        // First, try to fetch the user profile to see if it exists
+        const existingProfile = await fetchUserProfile(authUser.uid);
+        
+        if (existingProfile) {
+          // Profile exists, update lastLogin timestamp
+          try {
+            await updateDocument(COLLECTIONS.USERS, authUser.uid, { lastLogin: Timestamp.now() });
+          } catch (updateError) {
+            console.warn('AuthContext: Failed to update lastLogin, but continuing with login:', updateError);
+          }
+        } else {
+          // Profile doesn't exist, create it
+          console.log('AuthContext: User profile not found, creating new profile for existing auth user:', authUser.uid);
+          const newUserProfileData: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> = {
+            uid: authUser.uid,
+            email: authUser.email,
+            displayName: authUser.displayName,
+            photoURL: authUser.photoURL,
+            preferences: { theme: 'system', notifications: { email: true, inApp: true } },
+            subscriptionStatus: 'free',
+            credits: 10,
+            lastLogin: Timestamp.now(),
+          };
+          
+          try {
+            await setDocument(COLLECTIONS.USERS, authUser.uid, newUserProfileData);
+            console.log('AuthContext: Created missing user profile for:', authUser.uid);
+            await fetchUserProfile(authUser.uid); // Fetch the newly created profile
+          } catch (createError) {
+            console.error('AuthContext: Failed to create user profile during login:', createError);
+            // Continue with login even if profile creation fails
+          }
+        }
+        
         return authUser;
       }
       return null;
