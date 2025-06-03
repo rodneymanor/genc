@@ -126,10 +126,10 @@ const MyChannelToneContent = () => {
         <div className="p-6 bg-muted/30 rounded-lg text-center text-muted-foreground">
           <Info className="h-8 w-8 mx-auto mb-2 text-primary" />
           <p>After analysis, suggested tone cards will appear here.</p>
-          <p className="text-xs mt-1">Each card will offer a "Select as Default" option.</p>
+          <p className="text-xs mt-1">Each card will offer a &quot;Select as Default&quot; option.</p>
           {/* Example of how a card might look (very basic) */}
           <div className="mt-4 p-3 border border-dashed border-primary/50 rounded text-left text-xs max-w-xs mx-auto">
-            <p className="font-semibold">Example Tone: "Witty & Engaging"</p>
+            <p className="font-semibold">Example Tone: &quot;Witty &amp; Engaging&quot;</p>
             <p>Keywords: Humorous, Smart, Relatable</p>
             <Button variant="outline" size="sm" className="mt-2 w-full">Select as Default</Button>
           </div>
@@ -152,7 +152,7 @@ const FamousPersonToneLibraryContent = () => {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-foreground mb-1">Famous Person Tone Library</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Select a famous person whose communication style you admire. We'll use their tone as inspiration.
+        Select a famous person whose communication style you admire. We&apos;ll use their tone as inspiration.
       </p>
       <StandardizedInputGroup
         id="famousPersonSearch"
@@ -196,7 +196,7 @@ const AnalyzeInfluencerStyleContent = () => {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-foreground mb-1">Analyze Influencer Style</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Enter an influencer's channel URL or social media handle to analyze their content style.
+        Enter an influencer&apos;s channel URL or social media handle to analyze their content style.
       </p>
       <StandardizedInputGroup
         id="influencerHandle"
@@ -220,7 +220,7 @@ const AnalyzeInfluencerStyleContent = () => {
         <h3 className="text-lg font-semibold text-foreground mb-3">Influencer Analysis Report (G3B Placeholder)</h3>
         <div className="p-6 bg-muted/30 rounded-lg text-center text-muted-foreground">
           <Info className="h-8 w-8 mx-auto mb-2 text-primary" />
-          <p>After analysis, a detailed report on the influencer's style will appear here.</p>
+          <p>After analysis, a detailed report on the influencer&apos;s style will appear here.</p>
           <p className="text-xs mt-1">Includes common themes, structure, tone, engagement strategies, taglines, actionable suggestions, etc.</p>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function ToneStudioPage() {
             Tone Studio
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
-            Personalize your content's voice and style.
+            Personalize your content&apos;s voice and style.
           </p>
         </div>
 

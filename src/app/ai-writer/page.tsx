@@ -15,6 +15,7 @@ import type { ScriptHook, ScriptFactset, ScriptTake, ScriptOutro } from "@/lib/t
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { VoiceIndicator } from "@/components/ui/voice-indicator";
 import {
   Tooltip,
   TooltipContent,
@@ -122,9 +123,9 @@ const AiWriterTabs = () => {
     userSelectedComponents,
     analyzeAndGenerateOutlines,
     updateSelectedHook,
-    updateSelectedFactsets,
-    updateSelectedTake,
-    updateSelectedOutro,
+    updateSelectedBridge,
+    updateSelectedGoldenNugget,
+    updateSelectedWTA,
     finalScript,
     isLoadingFinalScript,
     finalScriptError,
@@ -143,12 +144,12 @@ const AiWriterTabs = () => {
   const handleGenerateFinalScript = () => {
     if (userSelectedComponents && 
         userSelectedComponents.hook && 
-        userSelectedComponents.factsets.length > 0 && 
-        userSelectedComponents.take && 
-        userSelectedComponents.outro) {
+        userSelectedComponents.bridge && 
+        userSelectedComponents.goldenNugget && 
+        userSelectedComponents.wta) {
       generateFinalScript();
     } else {
-      alert("Please select a hook, at least one factset, a take, and an outro from the Outline tab first.");
+      alert("Please select a hook, bridge, golden nugget, and WTA from the Outline tab first.");
     }
   };
 
@@ -185,13 +186,13 @@ const AiWriterTabs = () => {
               {isLoadingScriptComponents ? "Generating..." : "Generate Script Outline"}
             </Button>
           ) : (
-            <p className="text-sm text-orange-500">Please ensure a video idea has been searched and sources are available in the 'Research' tab.</p>
+            <p className="text-sm text-orange-500">Please ensure a video idea has been searched and sources are available in the &apos;Research&apos; tab.</p>
           )}
         </div>
       );
     }
 
-  return (
+    return (
       <div className="space-y-8">
         <section>
           <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your Hook:</h4>
@@ -220,23 +221,23 @@ const AiWriterTabs = () => {
 
         <section>
           <h4 className="text-xl font-semibold mb-3 border-b pb-2">Select Your Bridge:</h4>
-          {scriptComponents.factsets && scriptComponents.factsets.filter(f => f.category === 'Bridge').length > 0 ? (
+          {scriptComponents.bridges && scriptComponents.bridges.length > 0 ? (
             <RadioGroup
-              value={userSelectedComponents?.factsets?.find(f => f.category === 'Bridge')?.content || ""}
-              onValueChange={(content: string) => {
-                const selected = scriptComponents.factsets.find(f => f.category === 'Bridge' && f.content === content);
-                if (selected) updateSelectedFactsets(selected, true);
+              value={userSelectedComponents?.bridge?.title || ""}
+              onValueChange={(title: string) => {
+                const selected = scriptComponents.bridges.find(b => b.title === title);
+                updateSelectedBridge(selected || null);
               }}
             >
-              {scriptComponents.factsets.filter(f => f.category === 'Bridge').map((factset, index) => (
-                <div key={`bridge-factset-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              {scriptComponents.bridges.map((bridge, index) => (
+                <div key={`bridge-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={factset.content} id={`bridge-${index}`} />
+                    <RadioGroupItem value={bridge.title} id={`bridge-${index}`} />
                     <Label htmlFor={`bridge-${index}`} className="font-medium text-md cursor-pointer">
-                      Option {index + 1}
+                      {bridge.title}
                     </Label>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{factset.content}</p>
+                  <p className="text-sm text-muted-foreground mt-1 pl-6">{bridge.content}</p>
                 </div>
               ))}
             </RadioGroup>
@@ -244,49 +245,24 @@ const AiWriterTabs = () => {
         </section>
 
         <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Select Your Micro-Hook:</h4>
-          {scriptComponents.factsets && scriptComponents.factsets.filter(f => f.category === 'MicroHook').length > 0 ? (
-            <RadioGroup
-              value={userSelectedComponents?.factsets?.find(f => f.category === 'MicroHook')?.content || ""}
-              onValueChange={(content: string) => {
-                const selected = scriptComponents.factsets.find(f => f.category === 'MicroHook' && f.content === content);
-                if (selected) updateSelectedFactsets(selected, true);
-              }}
-            >
-              {scriptComponents.factsets.filter(f => f.category === 'MicroHook').map((factset, index) => (
-                <div key={`microhook-factset-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={factset.content} id={`microhook-${index}`} />
-                    <Label htmlFor={`microhook-${index}`} className="font-medium text-md cursor-pointer">
-                       Option {index + 1}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{factset.content}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Micro-Hook options generated.</p>}
-        </section>
-
-        <section>
           <h4 className="text-xl font-semibold mb-3 border-b pb-2">Select Your Golden Nugget:</h4>
-          {scriptComponents.factsets && scriptComponents.factsets.filter(f => f.category === 'GoldenNugget').length > 0 ? (
+          {scriptComponents.goldenNuggets && scriptComponents.goldenNuggets.length > 0 ? (
             <RadioGroup
-              value={userSelectedComponents?.factsets?.find(f => f.category === 'GoldenNugget')?.content || ""}
-              onValueChange={(content: string) => {
-                const selected = scriptComponents.factsets.find(f => f.category === 'GoldenNugget' && f.content === content);
-                if (selected) updateSelectedFactsets(selected, true);
+              value={userSelectedComponents?.goldenNugget?.title || ""}
+              onValueChange={(title: string) => {
+                const selected = scriptComponents.goldenNuggets.find(gn => gn.title === title);
+                updateSelectedGoldenNugget(selected || null);
               }}
             >
-              {scriptComponents.factsets.filter(f => f.category === 'GoldenNugget').map((factset, index) => (
-                <div key={`goldennugget-factset-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              {scriptComponents.goldenNuggets.map((goldenNugget, index) => (
+                <div key={`goldennugget-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={factset.content} id={`goldennugget-${index}`} />
+                    <RadioGroupItem value={goldenNugget.title} id={`goldennugget-${index}`} />
                     <Label htmlFor={`goldennugget-${index}`} className="font-medium text-md cursor-pointer">
-                       Option {index + 1}
+                      {goldenNugget.title}
                     </Label>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{factset.content}</p>
+                  <p className="text-sm text-muted-foreground mt-1 pl-6">{goldenNugget.content}</p>
                 </div>
               ))}
             </RadioGroup>
@@ -294,90 +270,39 @@ const AiWriterTabs = () => {
         </section>
 
         <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Additional Insights (Factsets):</h4>
-          {scriptComponents.factsets && scriptComponents.factsets.filter(f => !['Bridge', 'MicroHook', 'GoldenNugget'].includes(f.category)).length > 0 ? (
-            <div className="space-y-3">
-              {scriptComponents.factsets.filter(f => !['Bridge', 'MicroHook', 'GoldenNugget'].includes(f.category)).map((factset, index) => (
-                <div key={`other-factset-${index}`} className="flex items-start space-x-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Checkbox 
-                    id={`other-factset-${factset.category}-${index}`}
-                    checked={userSelectedComponents?.factsets?.some(f => f.content === factset.content && f.category === factset.category)}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => {
-                      updateSelectedFactsets(factset, !!checked);
-                    }}
-                    className="mt-1"
-                  />
-                  <div className="grid gap-1.5 leading-snug">
-                    <Label htmlFor={`other-factset-${factset.category}-${index}`} className="font-medium text-md cursor-pointer">
-                      {factset.category} (Insight {index + 1})
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{factset.content}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : <p className="text-sm text-muted-foreground">No additional insights/factsets generated.</p>}
-        </section>
-
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your Take:</h4>
-          {scriptComponents.takes && scriptComponents.takes.length > 0 ? (
+          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your WTA (Why to Act):</h4>
+          {scriptComponents.wtas && scriptComponents.wtas.length > 0 ? (
             <RadioGroup 
-              value={userSelectedComponents?.take?.perspective || ""} 
-              onValueChange={(perspective: string) => {
-                  const selected = scriptComponents.takes.find(t => t.perspective === perspective);
-                  updateSelectedTake(selected || null);
-              }}
-            >
-              {scriptComponents.takes.map((take, index) => (
-                <div key={`take-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={take.perspective} id={`take-${take.perspective}-${index}`} />
-                    <Label htmlFor={`take-${take.perspective}-${index}`} className="font-medium text-md cursor-pointer">
-                      {take.perspective}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{take.content}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Take options generated.</p>}
-        </section>
-
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your Outro (WTA - Why to Act):</h4>
-          {scriptComponents.outros && scriptComponents.outros.length > 0 ? (
-            <RadioGroup 
-              value={userSelectedComponents?.outro?.title || ""} 
+              value={userSelectedComponents?.wta?.title || ""} 
               onValueChange={(title: string) => {
-                  const selected = scriptComponents.outros.find(o => o.title === title);
-                  updateSelectedOutro(selected || null);
+                  const selected = scriptComponents.wtas.find(w => w.title === title);
+                  updateSelectedWTA(selected || null);
               }}
             >
-              {scriptComponents.outros.map((outro, index) => (
-                <div key={`outro-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              {scriptComponents.wtas.map((wta, index) => (
+                <div key={`wta-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={outro.title} id={`outro-${outro.title}-${index}`} />
-                    <Label htmlFor={`outro-${outro.title}-${index}`} className="font-medium text-md cursor-pointer">
-                      {outro.title}
+                    <RadioGroupItem value={wta.title} id={`wta-${wta.title}-${index}`} />
+                    <Label htmlFor={`wta-${wta.title}-${index}`} className="font-medium text-md cursor-pointer">
+                      {wta.title}
                     </Label>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{outro.lines.join(" ")}</p>
+                  <p className="text-sm text-muted-foreground mt-1 pl-6">{wta.lines.join(" ")}</p>
                 </div>
               ))}
             </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Outro (WTA) options generated.</p>}
+          ) : <p className="text-sm text-muted-foreground">No WTA options generated.</p>}
         </section>
-        </div>
+      </div>
     );
   };
 
   const renderScriptContent = () => {
     const canGenerateScript = userSelectedComponents && 
                               userSelectedComponents.hook && 
-                              userSelectedComponents.factsets.length > 0 && 
-                              userSelectedComponents.take && 
-                              userSelectedComponents.outro;
+                              userSelectedComponents.bridge && 
+                              userSelectedComponents.goldenNugget && 
+                              userSelectedComponents.wta;
 
     if (isLoadingFinalScript) {
       return <p className="text-center p-4">Generating your final script...</p>;
@@ -409,13 +334,13 @@ const AiWriterTabs = () => {
     return (
       <div className="text-center p-4">
         <p className="mb-4 text-muted-foreground">
-          Once you have selected your script components from the "Outline" tab, you can generate the final script here.
+          Once you have selected your script components from the &quot;Outline&quot; tab, you can generate the final script here.
         </p>
         <Button onClick={handleGenerateFinalScript} disabled={!canGenerateScript || isLoadingFinalScript}>
           {isLoadingFinalScript ? "Generating..." : "Generate Final Script"}
         </Button>
         {!canGenerateScript && 
-            <p className="text-xs text-orange-500 mt-2">Please select a hook, at least one factset, a take, and an outro from the Outline tab first.</p>
+            <p className="text-xs text-orange-500 mt-2">Please select a hook, bridge, golden nugget, and WTA from the &quot;Outline&quot; tab first.</p>
         }
       </div>
     );
@@ -496,7 +421,15 @@ const AiWriterTabs = () => {
 };
 
 const AiWriterPageContent = () => {
-  const { videoIdea, triggerSearch } = useAiWriterContext(); // Added triggerSearch here
+  const { 
+    videoIdea, 
+    triggerSearch,
+    activeVoiceProfile,
+    isLoadingVoiceProfile,
+    voiceProfileError,
+    deactivateVoiceProfile
+  } = useAiWriterContext();
+  
   const ideaTitle = videoIdea || "Enter a video idea to get started";
   // Local state for the input field if needed, or use videoIdea from context directly if appropriate
   // For example, if you want to type in an input and then click a button to trigger search:
@@ -511,14 +444,34 @@ const AiWriterPageContent = () => {
     triggerSearch(localVideoIdea);
   };
 
+  const handleDeactivateVoice = async () => {
+    try {
+      await deactivateVoiceProfile();
+      console.log("[AI Writer] Voice profile deactivated");
+    } catch (error) {
+      console.error("Error deactivating voice:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full space-y-4 md:space-y-6 pb-12">
+      {/* Voice Profile Indicator */}
+      {activeVoiceProfile && !isLoadingVoiceProfile && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+          <VoiceIndicator
+            voiceProfile={activeVoiceProfile}
+            onDeactivate={handleDeactivateVoice}
+            showDeactivate={true}
+          />
+        </div>
+      )}
+
       {/* Example Search Input -  YOU NEED TO INTEGRATE THIS OR A SIMILAR MECHANISM */}
       <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
         <div className="flex gap-2 items-center p-2 border rounded-lg bg-background">
           <input 
             type="text" 
-            placeholder="Enter your video idea here..." 
+            placeholder={activeVoiceProfile ? `Generate a script using ${activeVoiceProfile.sourceProfile.username}'s voice...` : "Enter your video idea here..."}
             className="flex-grow p-2 border-none focus:ring-0 bg-transparent"
             value={localVideoIdea}
             onChange={(e) => setLocalVideoIdea(e.target.value)}

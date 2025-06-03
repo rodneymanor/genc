@@ -1,6 +1,7 @@
 'use client';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { ScriptComponents, UserSelectedScriptComponents, ScriptHook, ScriptFactset, ScriptTake, ScriptOutro } from '@/lib/types/scriptComponents'; // Import all necessary types
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import type { ScriptComponents, UserSelectedScriptComponents, ScriptHook, ScriptFactset, ScriptTake, ScriptOutro, ScriptBridge, ScriptGoldenNugget, ScriptWTA } from '@/lib/types/scriptComponents'; // Import all necessary types
+import { VoiceProfileData, getActiveVoiceProfile, deactivateAllVoiceProfiles } from '@/lib/firestoreService';
 
 export interface Source {
   title: string;
@@ -34,7 +35,7 @@ interface AiWriterContextType {
   setIsExtractingContent: (isLoading: boolean) => void;
   contentExtractionError: string | null;
   setContentExtractionError: (error: string | null) => void;
-  extractContentFromAllSources: (currentSourcesParam?: Source[]) => Promise<void>;
+  extractContentFromAllSources: (currentSourcesParam?: Source[], currentVideoIdea?: string) => Promise<void>;
 
   // Research Analysis State
   researchAnalysis: { researchAnalysisText: string } | null;
@@ -54,11 +55,11 @@ interface AiWriterContextType {
   userSelectedComponents: UserSelectedScriptComponents | null;
   setUserSelectedComponents: (selected: UserSelectedScriptComponents | null) => void;
   updateSelectedHook: (hook: ScriptHook | null) => void;
-  updateSelectedFactsets: (factset: ScriptFactset, isSelected: boolean) => void;
-  updateSelectedTake: (take: ScriptTake | null) => void;
-  updateSelectedOutro: (outro: ScriptOutro | null) => void;
+  updateSelectedBridge: (bridge: ScriptBridge | null) => void;
+  updateSelectedGoldenNugget: (goldenNugget: ScriptGoldenNugget | null) => void;
+  updateSelectedWTA: (wta: ScriptWTA | null) => void;
   generateScriptComponents: () => Promise<void>; // New function to trigger component generation
-  analyzeAndGenerateOutlines: () => Promise<void>; // New function placeholder
+  analyzeAndGenerateOutlines: (sourcesToAnalyze?: Source[], currentVideoIdea?: string) => Promise<void>; // New function placeholder
 
   // New state for final script generation
   finalScript: string | null;
@@ -68,6 +69,14 @@ interface AiWriterContextType {
   finalScriptError: string | null;
   setFinalScriptError: (error: string | null) => void;
   generateFinalScript: () => Promise<void>; // Function to trigger final script generation
+
+  // Voice Profile State
+  activeVoiceProfile: VoiceProfileData | null;
+  setActiveVoiceProfile: (voiceProfile: VoiceProfileData | null) => void;
+  isLoadingVoiceProfile: boolean;
+  voiceProfileError: string | null;
+  loadActiveVoiceProfile: () => Promise<void>;
+  deactivateVoiceProfile: () => Promise<void>;
 }
 
 export const AiWriterContext = createContext<AiWriterContextType | undefined>(undefined);
@@ -101,51 +110,37 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
   const [isLoadingFinalScript, setIsLoadingFinalScript] = useState(false);
   const [finalScriptError, setFinalScriptError] = useState<string | null>(null);
 
+  // Voice Profile State
+  const [activeVoiceProfile, setActiveVoiceProfile] = useState<VoiceProfileData | null>(null);
+  const [isLoadingVoiceProfile, setIsLoadingVoiceProfile] = useState(false);
+  const [voiceProfileError, setVoiceProfileError] = useState<string | null>(null);
+
+  // Load active voice profile on context initialization
+  useEffect(() => {
+    loadActiveVoiceProfile();
+  }, []);
+
   const setUserSelectedComponents = (selected: UserSelectedScriptComponents | null) => {
     setUserSelectedComponentsState(selected);
   };
 
   const updateSelectedHook = (hook: ScriptHook | null) => {
-    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, factsets: [], take: null, outro: null }), hook }));
+    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, bridge: null, goldenNugget: null, wta: null }), hook }));
   };
 
-  const updateSelectedFactsets = (factset: ScriptFactset, isSelected: boolean) => {
-    setUserSelectedComponentsState(prev => {
-      if (!prev) {
-        // Initialize if null, though this case should ideally be handled by initial state or prior selections
-        return { hook: null, factsets: isSelected ? [factset] : [], take: null, outro: null };
-      }
-
-      let currentFactsets = prev.factsets || [];
-      const uniqueCategoriesForSingleSelection = ["Bridge", "MicroHook", "GoldenNugget"]; // Categories that allow only one selection
-
-      if (isSelected) {
-        // If the selected factset belongs to a unique category, remove others of the same category first
-        if (uniqueCategoriesForSingleSelection.includes(factset.category)) {
-          currentFactsets = currentFactsets.filter(f => f.category !== factset.category);
-        }
-        // Add the new factset
-        // Prevent adding duplicates if not a unique category (though for unique, filter already handles it)
-        if (!currentFactsets.some(f => f.content === factset.content && f.category === factset.category)) {
-            currentFactsets = [...currentFactsets, factset];
-        }
-      } else {
-        // If deselecting (though not directly via RadioGroup), remove it
-        currentFactsets = currentFactsets.filter(f => !(f.content === factset.content && f.category === factset.category));
-      }
-      return { ...prev, factsets: currentFactsets };
-    });
+  const updateSelectedBridge = (bridge: ScriptBridge | null) => {
+    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, bridge: null, goldenNugget: null, wta: null }), bridge }));
   };
 
-  const updateSelectedTake = (take: ScriptTake | null) => {
-    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, factsets: [], take: null, outro: null }), take }));
+  const updateSelectedGoldenNugget = (goldenNugget: ScriptGoldenNugget | null) => {
+    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, bridge: null, goldenNugget: null, wta: null }), goldenNugget }));
   };
 
-  const updateSelectedOutro = (outro: ScriptOutro | null) => {
-    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, factsets: [], take: null, outro: null }), outro }));
+  const updateSelectedWTA = (wta: ScriptWTA | null) => {
+    setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, bridge: null, goldenNugget: null, wta: null }), wta }));
   };
 
-  const extractContentFromAllSources = async (currentSourcesParam?: Source[]) => {
+  const extractContentFromAllSources = async (currentSourcesParam?: Source[], currentVideoIdea?: string) => {
     const sourcesToProcess = currentSourcesParam || sources;
     if (!sourcesToProcess || sourcesToProcess.length === 0) {
       setProcessingError("No sources available to extract content from.");
@@ -204,7 +199,21 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
             return { ...source, isTextExtracted: false, textExtractionError: apiErrorMessage };
           }
           const data = await response.json();
-          return { ...source, extractedText: data.text, isTextExtracted: true, textExtractionError: undefined };
+          
+          // Check if the extractedText indicates a failure (contains error messages)
+          const isErrorMessage = data.extractedText && (
+            data.extractedText.includes('Failed to fetch content from') ||
+            data.extractedText.includes('Content not accessible from') ||
+            data.extractedText.includes('extraction failed')
+          );
+          
+          if (isErrorMessage) {
+            if (!firstErrorEncountered) firstErrorEncountered = `Failed for ${new URL(source.link).hostname}: ${data.extractedText}`;
+            anySourceFailed = true;
+            return { ...source, isTextExtracted: false, textExtractionError: data.extractedText };
+          }
+          
+          return { ...source, extractedText: data.extractedText, isTextExtracted: true, textExtractionError: undefined };
         } catch (error: any) {
           clearTimeout(singleExtractionTimeoutId);
           let errorMessage = "Network or client-side error during extraction";
@@ -225,21 +234,48 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
     clearTimeout(extractionTimeoutId);
     setSources(updatedSources);
 
-    if (anySourceFailed) {
-      const finalErrorMessage = `Some content could not be extracted. First error: ${firstErrorEncountered || "Unknown extraction error"}`;
+    // Count successful extractions
+    const successfulExtractions = updatedSources.filter(s => s.isTextExtracted && !s.textExtractionError).length;
+    const totalSources = updatedSources.length;
+
+    if (successfulExtractions === 0) {
+      // Only fail if NO sources were successfully extracted
+      const finalErrorMessage = `Unable to extract content from any sources. First error: ${firstErrorEncountered || "Unknown extraction error"}`;
       setProcessingError(finalErrorMessage);
       setErrorStep("extract");
-      setCurrentStep("extract_issues");
-    } else {
+      setCurrentStep("extract_failed");
+      setIsProcessing(false);
+    } else if (anySourceFailed) {
+      // Some sources failed but we have at least one success - continue with a warning
+      console.warn(`[AiWriterContext] ${totalSources - successfulExtractions} out of ${totalSources} sources failed to extract content. Continuing with ${successfulExtractions} successful extractions.`);
       setProcessingError(null); 
       setErrorStep(null);
-      setCurrentStep("analyze_ready"); 
-    }
-    
-    if (firstErrorEncountered) {
+      
+      // Automatically continue to analysis and outline generation - pass current videoIdea
+      console.log("[AiWriterContext] Automatically triggering analysis and outline generation...");
+      try {
+        await analyzeAndGenerateOutlines(updatedSources, currentVideoIdea || videoIdea);
+      } catch (error: any) {
+        console.error("[AiWriterContext] Error during automatic outline generation:", error);
+        setProcessingError(error.message || "Failed to generate outlines automatically.");
+        setCurrentStep("extract_completed_with_errors");
         setIsProcessing(false);
+      }
     } else {
+      // All sources succeeded
+      setProcessingError(null); 
+      setErrorStep(null);
+      
+      // Automatically continue to analysis and outline generation - pass current videoIdea
+      console.log("[AiWriterContext] Automatically triggering analysis and outline generation...");
+      try {
+        await analyzeAndGenerateOutlines(updatedSources, currentVideoIdea || videoIdea);
+      } catch (error: any) {
+        console.error("[AiWriterContext] Error during automatic outline generation:", error);
+        setProcessingError(error.message || "Failed to generate outlines automatically.");
+        setCurrentStep("extract_completed");
         setIsProcessing(false);
+      }
     }
   };
 
@@ -261,7 +297,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
 
     setSources([]);
     setScriptComponents(null);
-    setUserSelectedComponentsState({ hook: null, factsets: [], take: null, outro: null });
+    setUserSelectedComponentsState({ hook: null, bridge: null, goldenNugget: null, wta: null });
     setFinalScript(null);
     setResearchAnalysis(null);
     setProcessingError(null);
@@ -297,7 +333,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setSources(data.sources || []); 
 
       if (data.sources && data.sources.length > 0) {
-        await extractContentFromAllSources(data.sources); 
+        await extractContentFromAllSources(data.sources, idea); 
       } else {
         setProcessingError("No sources found for your idea. Try a different topic or wording.");
         setIsProcessing(false); 
@@ -343,7 +379,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
         console.error("[Context] API Error for script components:", errorMsg, (data as {rawResponse?: string}).rawResponse || (data as {error?: string}).error);
         throw new Error(errorMsg);
       }
-      if ('hooks' in data && 'factsets' in data && 'takes' in data && 'outros' in data) {
+      if ('hooks' in data && 'bridges' in data && 'goldenNuggets' in data && 'wtas' in data) {
          setScriptComponents(data as ScriptComponents);
       } else {
         throw new Error("Received malformed script component data from API.");
@@ -357,10 +393,31 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const analyzeAndGenerateOutlines = async () => {
-    const sourcesForAnalysis = sources.filter(s => s.isTextExtracted && s.extractedText);
+  const analyzeAndGenerateOutlines = async (sourcesToAnalyze?: Source[], currentVideoIdea?: string) => {
+    console.log(`[Context] analyzeAndGenerateOutlines called with ${(sourcesToAnalyze || sources).length} potential sources`);
+    
+    const sourcesForAnalysis = (sourcesToAnalyze || sources).filter(s => s.isTextExtracted && s.extractedText);
+    console.log(`[Context] After filtering for extracted text: ${sourcesForAnalysis.length} sources available`);
+    
+    // Log details about sources
+    (sourcesToAnalyze || sources).forEach((source, index) => {
+      console.log(`[Context] Source ${index}: isTextExtracted=${source.isTextExtracted}, hasExtractedText=${!!source.extractedText}, textLength=${source.extractedText?.length || 0}, title="${source.title}"`);
+    });
+    
     if (sourcesForAnalysis.length === 0) {
-      setResearchAnalysisError("No successfully extracted source content available for analysis. Please check the Research tab.");
+      console.error(`[Context] No sources with extracted text available. Total sources: ${(sourcesToAnalyze || sources).length}`);
+      setResearchAnalysisError("No successfully extracted source content available for analysis. All sources either failed to extract content or are still being processed. Please wait for content extraction to complete or try different sources.");
+      setIsProcessing(false);
+      setCurrentStep("analyze_failed");
+      return;
+    }
+
+    console.log(`[Context] Starting analysis with ${sourcesForAnalysis.length} sources for videoIdea: "${currentVideoIdea || videoIdea}"`);
+    console.log(`[Context] Current videoIdea length: ${(currentVideoIdea || videoIdea)?.length || 0}`);
+
+    if (!(currentVideoIdea || videoIdea) || (currentVideoIdea || videoIdea).trim().length === 0) {
+      console.error(`[Context] videoIdea is empty or invalid: "${currentVideoIdea || videoIdea}"`);
+      setResearchAnalysisError("Video idea is required but appears to be empty. Please enter a video idea and try again.");
       setIsProcessing(false);
       setCurrentStep("analyze_failed");
       return;
@@ -384,17 +441,52 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
         text: s.extractedText || '' 
       }));
 
+      console.log(`[Context] Prepared sourceContents for API:`, {
+        videoIdea: currentVideoIdea || videoIdea,
+        sourceCount: sourceContentsForApi.length,
+        firstSource: sourceContentsForApi[0] ? {
+          link: sourceContentsForApi[0].link,
+          title: sourceContentsForApi[0].title,
+          textLength: sourceContentsForApi[0].text.length
+        } : null
+      });
+
+      const requestBody = { videoIdea: currentVideoIdea || videoIdea, sourceContents: sourceContentsForApi };
+      
+      console.log(`[Context] Making request to /api/create-research-analysis with:`, {
+        videoIdea: requestBody.videoIdea,
+        sourceContentsLength: requestBody.sourceContents.length
+      });
+
       const response = await fetch('/api/create-research-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoIdea, sourceContents: sourceContentsForApi }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log(`[Context] Research analysis response status: ${response.status}`);
+
       const data = await response.json();
+      console.log(`[Context] Research analysis response data:`, {
+        hasError: !!data.error,
+        hasResearchAnalysisText: !!data.researchAnalysisText,
+        logs: data.logs
+      });
 
       if (!response.ok || !data.researchAnalysisText) {
         console.error("Error creating research analysis:", data.error, data.logs);
-        throw new Error(data.error || "Failed to generate research analysis text from API.");
+        
+        // Provide more specific error messages
+        let errorMessage = "Failed to generate research analysis text from API.";
+        if (data.error) {
+          errorMessage = `Research Analysis Error: ${data.error}`;
+        }
+        if (data.logs && data.logs.length > 0) {
+          console.error("Research Analysis Logs:", data.logs);
+          errorMessage += ` (Check console for details)`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       setResearchAnalysis({ researchAnalysisText: data.researchAnalysisText });
@@ -410,7 +502,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
         const componentsResponse = await fetch('/api/generate-script-components', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoIdea, researchAnalysisText: data.researchAnalysisText }),
+          body: JSON.stringify({ videoIdea: currentVideoIdea || videoIdea, researchAnalysisText: data.researchAnalysisText }),
         });
 
         const componentsData: ScriptComponents | { message: string; rawResponse?: string; error?: string, errorDetails?: string, blockReason?: string, safetyRatings?: any, promptFeedback?: any } = await componentsResponse.json();
@@ -421,10 +513,11 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
           throw new Error(errorMsg);
         }
 
-        if ('hooks' in componentsData && 'factsets' in componentsData && 'outros' in componentsData) {
+        if ('hooks' in componentsData && 'bridges' in componentsData && 'goldenNuggets' in componentsData && 'wtas' in componentsData) {
           setScriptComponents(componentsData as ScriptComponents);
           console.log("[Context] Script components generated successfully.");
           setCurrentStep("outline_ready"); 
+          setIsProcessing(false);
         } else {
           console.error("[Context] Received malformed script component data:", componentsData);
           throw new Error("Received malformed script component data from API.");
@@ -435,6 +528,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
         setScriptComponentsError(compError.message || "An unknown error occurred during script component generation.");
         setErrorStep("generate_options"); 
         setCurrentStep("generate_failed");
+        setIsProcessing(false);
       } finally {
         setIsLoadingScriptComponents(false);
       }
@@ -446,6 +540,7 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setCurrentStep("analyze_failed");
       setIsLoadingResearchAnalysis(false);
       setIsLoadingScriptComponents(false); 
+      setIsProcessing(false);
     }
   };
 
@@ -454,8 +549,8 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setFinalScriptError("Video idea and selected script components are required to generate the final script.");
       return;
     }
-    if (!userSelectedComponents.hook || userSelectedComponents.factsets.length === 0 || !userSelectedComponents.take || !userSelectedComponents.outro) {
-      setFinalScriptError("All component types (Hook, Factsets, Take, Outro) must be selected.");
+    if (!userSelectedComponents.hook || !userSelectedComponents.bridge || !userSelectedComponents.goldenNugget || !userSelectedComponents.wta) {
+      setFinalScriptError("All component types (Hook, Bridge, Golden Nugget, WTA) must be selected.");
       return;
     }
 
@@ -464,10 +559,21 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
     setFinalScript(null);
 
     try {
+      const requestBody: any = {
+        videoIdea,
+        selectedComponents: userSelectedComponents
+      };
+
+      // Include voice profile if one is active
+      if (activeVoiceProfile) {
+        requestBody.voiceProfile = activeVoiceProfile;
+        console.log(`[Context] Including voice profile in script generation: ${activeVoiceProfile.name}`);
+      }
+
       const response = await fetch('/api/generate-final-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoIdea, selectedComponents: userSelectedComponents }),
+        body: JSON.stringify(requestBody),
       });
 
       const data: { script?: string; message?: string; error?: string } = await response.json();
@@ -484,6 +590,41 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setFinalScriptError(err.message || "An unknown error occurred during final script generation.");
     } finally {
       setIsLoadingFinalScript(false);
+    }
+  };
+
+  const loadActiveVoiceProfile = async () => {
+    setIsLoadingVoiceProfile(true);
+    setVoiceProfileError(null);
+
+    try {
+      // For now, we'll use a mock user ID. In production, get this from auth
+      const mockUserId = "user_123"; // Replace with actual user ID from auth
+      const profile = await getActiveVoiceProfile(mockUserId);
+      setActiveVoiceProfile(profile);
+      console.log("[Context] Active voice profile loaded:", profile?.name || "None");
+    } catch (error: any) {
+      console.error("Error loading active voice profile:", error);
+      setVoiceProfileError(error.message || "Failed to load active voice profile.");
+    } finally {
+      setIsLoadingVoiceProfile(false);
+    }
+  };
+
+  const deactivateVoiceProfile = async () => {
+    setIsLoadingVoiceProfile(true);
+    setVoiceProfileError(null);
+
+    try {
+      const mockUserId = "user_123"; // Replace with actual user ID
+      await deactivateAllVoiceProfiles(mockUserId);
+      setActiveVoiceProfile(null);
+      console.log("[Context] Voice profile deactivated");
+    } catch (error: any) {
+      console.error("Error deactivating voice profile:", error);
+      setVoiceProfileError(error.message || "Failed to deactivate voice profile.");
+    } finally {
+      setIsLoadingVoiceProfile(false);
     }
   };
 
@@ -512,13 +653,18 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       isLoadingScriptComponents, setIsLoadingScriptComponents,
       scriptComponentsError, setScriptComponentsError,
       userSelectedComponents, setUserSelectedComponents,
-      updateSelectedHook, updateSelectedFactsets, updateSelectedTake, updateSelectedOutro,
+      updateSelectedHook, updateSelectedBridge, updateSelectedGoldenNugget, updateSelectedWTA,
       generateScriptComponents,
       analyzeAndGenerateOutlines,
       finalScript, setFinalScript,
       isLoadingFinalScript, setIsLoadingFinalScript,
       finalScriptError, setFinalScriptError,
-      generateFinalScript
+      generateFinalScript,
+      activeVoiceProfile, setActiveVoiceProfile,
+      isLoadingVoiceProfile,
+      voiceProfileError,
+      loadActiveVoiceProfile,
+      deactivateVoiceProfile
     }}>
       {children}
     </AiWriterContext.Provider>

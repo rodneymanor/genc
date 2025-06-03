@@ -40,6 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 // New mainNavItems structure
 export const mainNavItems = [
@@ -54,13 +55,13 @@ export const mainNavItems = [
   //   iconName: "FilePlus2",
   // },
   {
-    label: "My Scripts",
+    label: "Library",
     path: "/my-scripts",
-    iconName: "BookOpen",
+    iconName: "Library",
   },
   {
-    label: "Discover & Analyze",
-    path: "/discover",
+    label: "Inspiration",
+    path: "/inspiration",
     iconName: "Compass",
     // Example of sub-items if needed later, matching react-pro-sidebar structure
     // subItems: [
@@ -114,7 +115,7 @@ const SidebarHeader = ({ collapsed }: { collapsed: boolean }) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0px', borderBottom: '1px solid hsl(var(--border) / 0.5)', height: '65px' /* Fixed height */ }}>
       <Link href="/" passHref style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-        <Image src="/scribo-logo.png" alt="Scribo Logo" width={40} height={40} />
+        <Image src="/Gen C.svg" alt="Gen C Logo" width={40} height={40} />
         {/* Name removed as it will always be collapsed on desktop */}
       </Link>
       {/* Hamburger/toggle button is removed for always-collapsed desktop */}
@@ -174,9 +175,11 @@ const NavigationMenu = () => {
              {/* Let's ensure the icon color is primary-foreground for this button */}
             </MenuItem>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={15}>
-            <p>New Script</p>
-          </TooltipContent>
+          <TooltipPrimitive.Portal>
+            <TooltipContent side="right" sideOffset={15}>
+              <p>New Script</p>
+            </TooltipContent>
+          </TooltipPrimitive.Portal>
         </Tooltip>
 
         {mainNavItems.map((item, index) => {
@@ -194,9 +197,11 @@ const NavigationMenu = () => {
                     {/* Label is not shown when collapsed */}
                   </MenuItem>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={15}>
-                <p>{item.label}</p>
-              </TooltipContent>
+              <TooltipPrimitive.Portal>
+                <TooltipContent side="right" sideOffset={15}>
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </TooltipPrimitive.Portal>
             </Tooltip>
           );
         })}
@@ -213,8 +218,8 @@ const ProfileSection = () => {
       // User is not logged in, redirect to login page
       router.push('/login');
     } else {
-      // User is logged in, navigate to profile page
-      router.push('/profile');
+      // User is logged in, navigate to settings page (formerly profile)
+      router.push('/settings');
     }
   };
 
@@ -242,9 +247,11 @@ const ProfileSection = () => {
                 {/* Name and dropdown arrow removed for collapsed view */}
               </MenuItem>
             </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={15}>
-              <p>Login</p>
-            </TooltipContent>
+            <TooltipPrimitive.Portal>
+              <TooltipContent side="right" sideOffset={15}>
+                <p>Login</p>
+              </TooltipContent>
+            </TooltipPrimitive.Portal>
           </Tooltip>
         </Menu>
       </div>
@@ -269,9 +276,11 @@ const ProfileSection = () => {
               </div>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={15}>
-            <p>{displayName}</p>
-          </TooltipContent>
+          <TooltipPrimitive.Portal>
+            <TooltipContent side="right" sideOffset={15}>
+              <p>{displayName}</p>
+            </TooltipContent>
+          </TooltipPrimitive.Portal>
         </Tooltip>
         
         <DropdownMenuContent side="right" align="end" className="w-56">
@@ -284,7 +293,7 @@ const ProfileSection = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleProfileClick}>
+          <DropdownMenuItem onClick={() => router.push('/settings')}>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
@@ -320,10 +329,10 @@ export default function PerplexitySidebar() {
         breakPoint="md"
         backgroundColor="hsl(var(--sidebar-background) / 0.4)"
         className="perplexity-sidebar backdrop-blur-lg"
-        style={{ minHeight: "100dvh", height: "auto", display: "flex", flexDirection: "column", borderColor: "hsl(var(--sidebar-border) / 0.5)" }}
+        style={{ minHeight: "100dvh", height: "auto", display: "flex", flexDirection: "column", overflow: "visible" }}
       >
         <SidebarHeader collapsed={true} />
-        <div style={{ flexGrow: 1, overflowY: 'visible', overflowX: 'visible' }}>
+        <div style={{ flexGrow: 1, overflowY: 'visible', overflowX: 'visible', overflow: 'visible' }}>
           <NavigationMenu />
         </div>
         <ProfileSection />

@@ -1,30 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const ASSEMBLYAI_API_KEY = process.env.ASSEMBLYAI_API_KEY;
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = 'social-media-video-downloader.p.rapidapi.com';
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-interface RapidApiResponseLink {
-  link: string;
+interface ApiResponseLink {
   quality?: string;
-  type?: string;
-  size?: string;
-  hasAudio?: boolean;
-  audioQuality?: string;
-  mimeType?: string;
-  codecs?: string;
+  link?: string;
+  renderLink?: string;
+  monitor?: {
+    websocket?: string;
+    http?: string;
+  };
 }
 
-interface RapidApiResponse {
+interface ApiResponse {
   success: boolean;
+  message?: string | null;
+  src_url?: string;
   title?: string;
-  duration?: number;
-  links?: RapidApiResponseLink[];
-  meta?: {
-    source?: string;
+  author?: {
+    nickname?: string;
+    uniqueId?: string;
   };
-  video_hd_540p_lowest?: string;
+  stats?: {
+    music?: {
+      playUrl?: string;
+  duration?: number;
+      preciseDuration?: {
+        preciseDuration?: number;
+        preciseShootDuration?: number;
+        preciseAuditionDuration?: number;
+        preciseVideoDuration?: number;
+      };
+    };
+  };
+  links?: ApiResponseLink[];
+  r_id?: string;
+  timeTaken?: string;
 }
 
 // Helper function to decode SMVD proxied URLs for TikTok
@@ -34,7 +49,7 @@ function decodeSmvdTikTokProxyUrl(proxyUrl: string): string | null {
     if (url.hostname.includes('api-edge.smvd.xyz')) {
       const uParam = url.searchParams.get('u');
       if (uParam) {
-        console.log(`[API /transcribe] uParam from proxy: ${uParam.substring(0, 100)}...`); // Log start of uParam
+        console.log(`[API /transcribe] uParam from proxy: ${uParam.substring(0, 100)}...`);
         
         // Step 1: Base64 decode
         const base64Decoded = Buffer.from(uParam, 'base64').toString('utf-8');
@@ -65,183 +80,132 @@ function getCleanTikTokUrl(urlString: string): string {
   }
 }
 
-export async function POST(request: NextRequest) {
-  if (!ASSEMBLYAI_API_KEY) {
-    console.error('AssemblyAI API key is not set.');
-    return NextResponse.json({ error: 'Server configuration error: AssemblyAI API key missing.' }, { status: 500 });
-  }
-  if (!RAPIDAPI_KEY) {
-    console.error('RapidAPI key is not set.');
-    return NextResponse.json({ error: 'Server configuration error: RapidAPI key missing.' }, { status: 500 });
-  }
-
-  try {
-    const body = await request.json();
-    const { videoUrl } = body;
-
-    if (!videoUrl) {
-      return NextResponse.json({ error: 'Missing videoUrl in request body' }, { status: 400 });
-    }
-
-    console.log(`[API /transcribe] Received request for URL: ${videoUrl}`);
-
-    let audioUrlToTranscribe: string | null = null;
-    let isTikTok = false;
-
+// Helper function to download video data for Gemini processing
+async function downloadVideoData(videoUrl: string): Promise<Buffer> {
     try {
-      console.log(`[API /transcribe] Fetching media info from RapidAPI for: ${videoUrl}`);
-      const rapidApiUrl = `https://${RAPIDAPI_HOST}/smvd/get/all?url=${encodeURIComponent(videoUrl)}`;
-      const rapidApiResponse = await axios.get<RapidApiResponse>(rapidApiUrl, {
-        headers: {
-          'X-Rapidapi-Key': RAPIDAPI_KEY,
-          'X-Rapidapi-Host': RAPIDAPI_HOST,
-        },
-        timeout: 15000, // 15 seconds timeout
-      });
-
-      if (rapidApiResponse.data && rapidApiResponse.data.success) {
-        const links = rapidApiResponse.data.links || [];
-        console.log(`[API /transcribe] RapidAPI response success. Links found: ${links.length}`);
-        
-        const sourceFromMeta = rapidApiResponse.data.meta?.source?.toLowerCase();
-        isTikTok = sourceFromMeta?.includes('tiktok') || videoUrl.includes('tiktok.com');
-
-        if (isTikTok) {
-          console.log('[API /transcribe] Detected TikTok URL.');
-          // Attempt to find and decode a proxied link first
-          for (const linkObj of links) {
-            if (linkObj.link.includes('api-edge.smvd.xyz')) {
-              const decodedDirectUrl = decodeSmvdTikTokProxyUrl(linkObj.link);
-              if (decodedDirectUrl) {
-                // Clean the URL by removing query parameters that cause encoding issues
-                const cleanTikTokUrl = getCleanTikTokUrl(decodedDirectUrl);
-                audioUrlToTranscribe = cleanTikTokUrl;
-                console.log(`[API /transcribe] Found, decoded, and cleaned TikTok URL: ${audioUrlToTranscribe}`);
-                break;
+    console.log(`[API /transcribe] Downloading video data from: ${videoUrl}`);
+    const response = await axios.get(videoUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000, // 30 seconds timeout
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      }
+    });
+    
+    console.log(`[API /transcribe] Successfully downloaded ${response.data.byteLength} bytes`);
+    return Buffer.from(response.data);
+  } catch (error: any) {
+    console.error('[API /transcribe] Error downloading video data:', error.message);
+    throw new Error(`Failed to download video: ${error.message}`);
               }
             }
-          }
-          // Fallback to other TikTok link finding methods if decoded URL not found
-          if (!audioUrlToTranscribe && rapidApiResponse.data.video_hd_540p_lowest) {
-            // Clean the video_hd_540p_lowest URL too
-            audioUrlToTranscribe = getCleanTikTokUrl(rapidApiResponse.data.video_hd_540p_lowest);
-            console.log(`[API /transcribe] Using cleaned TikTok video_hd_540p_lowest: ${audioUrlToTranscribe}`);
-          }
-          if (!audioUrlToTranscribe) {
-            // Generic fallback for TikTok from links array (prefer non-proxy if possible)
-            const nonProxyVideo = links.find(l => (l.type === 'mp4' || l.mimeType === 'video/mp4') && l.link && !l.link.includes('api-edge.smvd.xyz'));
-            if (nonProxyVideo) {
-              // Clean this URL too
-              audioUrlToTranscribe = getCleanTikTokUrl(nonProxyVideo.link);
-              console.log(`[API /transcribe] Using cleaned non-proxy TikTok MP4 link: ${audioUrlToTranscribe}`);
-            }
-          }
-          
-          // If we still have no valid URL, try using the original TikTok URL as a last resort
-          if (!audioUrlToTranscribe) {
-            console.log(`[API /transcribe] All URL extraction methods failed. Trying original TikTok URL: ${videoUrl}`);
-            audioUrlToTranscribe = videoUrl;
-          }
-        } else {
-          // Existing logic for Instagram/Facebook & YouTube Shorts
-          let igFbAudioLink = links.find(l => l.quality === 'audio_0' && l.link);
-          if (igFbAudioLink) {
-            audioUrlToTranscribe = igFbAudioLink.link;
-            console.log(`[API /transcribe] Found Instagram/Facebook audio link: ${audioUrlToTranscribe}`);
-          }
 
-          if (!audioUrlToTranscribe) { // YouTube Shorts
-            const youtubeAudioLinks = links.filter(l => l.hasAudio && (l.mimeType?.includes('audio/mp4') || l.codecs === 'mp4a.40.2' || l.codecs === 'mp4a.40.5'));
-            if (youtubeAudioLinks.length > 0) {
-              const mediumQuality = youtubeAudioLinks.find(l => l.audioQuality === 'AUDIO_QUALITY_MEDIUM');
-              const lowQuality = youtubeAudioLinks.find(l => l.audioQuality === 'AUDIO_QUALITY_LOW');
-              audioUrlToTranscribe = mediumQuality?.link || lowQuality?.link || youtubeAudioLinks[0].link;
-              console.log(`[API /transcribe] Found YouTube Shorts audio link: ${audioUrlToTranscribe}`);
-            }
-          }
-        }
-
-        // General Fallback if no specific URL found yet
-        if (!audioUrlToTranscribe && links.length > 0) {
-            const mp4Link = links.find(l => l.link && (l.type === 'mp4' || l.mimeType === 'video/mp4'));
-            if (mp4Link) {
-                audioUrlToTranscribe = mp4Link.link;
-                console.log(`[API /transcribe] General Fallback: Using first MP4 video link for audio extraction: ${audioUrlToTranscribe}`);
-            }
-        }
-        
-        if (!audioUrlToTranscribe) {
-            console.warn('[API /transcribe] Could not extract a suitable audio/video URL from RapidAPI response.', rapidApiResponse.data);
-            return NextResponse.json({ error: 'Could not extract audio URL from the provided social media link via RapidAPI.' }, { status: 400 });
-        }
-
-      } else {
-        console.error('[API /transcribe] RapidAPI request failed or did not return success.', rapidApiResponse.data);
-        return NextResponse.json({ error: 'Failed to fetch media information from social media URL.', detail: rapidApiResponse.data || 'No data from RapidAPI' }, { status: 500 });
+// Helper function to download audio data for Gemini processing
+async function downloadAudioData(audioUrl: string): Promise<Buffer> {
+  try {
+    console.log(`[API /transcribe] Downloading audio data from: ${audioUrl}`);
+    const response = await axios.get(audioUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000, // 30 seconds timeout
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
       }
-    } catch (error: any) {
-      console.error('[API /transcribe] Error calling RapidAPI:', error.response?.data || error.message || error);
-      let errorMessage = 'Error fetching media information.';
-      if (error.code === 'ECONNABORTED') {
-        errorMessage = 'Timeout fetching media information. The source might be slow or unavailable.';
-      } else if (error.response?.data?.error) {
-        errorMessage = `Error from media fetcher: ${error.response.data.error}`;
-      }
-      return NextResponse.json({ error: errorMessage, detail: error.response?.data || error.message }, { status: 502 }); // Bad Gateway or appropriate
-    }
-
-    // 2. Transcribe with AssemblyAI
-    console.log(`[API /transcribe] Submitting to AssemblyAI for transcription: ${audioUrlToTranscribe}`);
-    const assemblyAiUrl = 'https://api.assemblyai.com/v2/transcript';
-    const assemblyAiHeaders = {
-      authorization: ASSEMBLYAI_API_KEY,
-      'Content-Type': 'application/json',
-    };
-    const assemblyAiData = {
-      audio_url: audioUrlToTranscribe,
-      speech_model: 'slam-1', // As per user's code
-      // Potentially add other parameters like language_code if known, or speaker_labels etc.
-    };
-
-    let transcriptId = '';
-    try {
-      const submissionResponse = await axios.post(assemblyAiUrl, assemblyAiData, { headers: assemblyAiHeaders });
-      transcriptId = submissionResponse.data.id;
-      console.log(`[API /transcribe] AssemblyAI transcript ID: ${transcriptId}`);
-    } catch (error: any) {
-      console.error('[API /transcribe] Error submitting to AssemblyAI:', error.response?.data || error.message || error);
-      const errorMessage = error.response?.data?.error || 'Failed to submit audio for transcription.';
-      return NextResponse.json({ error: `AssemblyAI submission error: ${errorMessage}` }, { status: 500 });
-    }
-
-    // 3. Poll for AssemblyAI transcript completion
-    const pollingEndpoint = `https://api.assemblyai.com/v2/transcript/${transcriptId}`;
-    while (true) {
-      try {
-        console.log(`[API /transcribe] Polling AssemblyAI for transcript ID: ${transcriptId}`);
-        const pollingResponse = await axios.get(pollingEndpoint, { headers: assemblyAiHeaders });
-        const transcriptionResult = pollingResponse.data;
-
-        if (transcriptionResult.status === 'completed') {
-          console.log(`[API /transcribe] Transcription completed for ID: ${transcriptId}`);
-          return NextResponse.json({ transcript: transcriptionResult.text }, { status: 200 });
-        } else if (transcriptionResult.status === 'error') {
-          console.error(`[API /transcribe] AssemblyAI transcription failed for ID ${transcriptId}: ${transcriptionResult.error}`);
-          throw new Error(`Transcription failed: ${transcriptionResult.error}`);
-        } else {
-          // Statuses: queued, processing
-          console.log(`[API /transcribe] Transcription status for ${transcriptId}: ${transcriptionResult.status}. Waiting...`);
-          await new Promise((resolve) => setTimeout(resolve, 5000)); // Poll every 5 seconds
-        }
-      } catch (error: any) {
-        console.error(`[API /transcribe] Error polling AssemblyAI for ID ${transcriptId}:`, error.response?.data || error.message || error);
-        const errorMessage = error.response?.data?.error || 'Error while waiting for transcription result.';
-        return NextResponse.json({ error: `AssemblyAI polling error: ${errorMessage}` }, { status: 500 });
-      }
-    }
-
+    });
+    
+    console.log(`[API /transcribe] Successfully downloaded ${response.data.byteLength} bytes`);
+    return Buffer.from(response.data);
   } catch (error: any) {
-    console.error('[API /transcribe] General error in POST handler:', error.message || error);
-    return NextResponse.json({ error: 'An unexpected error occurred on the server.' }, { status: 500 });
+    console.error('[API /transcribe] Error downloading audio data:', error.message);
+    throw new Error(`Failed to download audio: ${error.message}`);
+          }
+}
+
+// Helper function to monitor audio rendering status
+async function waitForAudioRender(monitorUrl: string, maxAttempts: number = 30): Promise<boolean> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await axios.get(monitorUrl, { timeout: 5000 });
+      const status = response.data;
+      
+      console.log(`[API /transcribe] Render status check ${attempt}: ${JSON.stringify(status)}`);
+      
+      if (status.status === 'completed' || status.completed === true) {
+        console.log('[API /transcribe] Audio rendering completed');
+        return true;
+      } else if (status.status === 'failed' || status.failed === true) {
+        console.error('[API /transcribe] Audio rendering failed');
+        return false;
+      }
+      
+      // Wait 2 seconds before next check
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    } catch (error) {
+      console.warn(`[API /transcribe] Error checking render status (attempt ${attempt}):`, error);
+    }
+  }
+  
+  console.warn('[API /transcribe] Audio rendering timeout after maximum attempts');
+  return false;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const audioFile = formData.get('audio') as File;
+
+    if (!audioFile) {
+      return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
+    }
+
+    // Convert the audio file to bytes
+    const bytes = await audioFile.arrayBuffer();
+    const audioBytes = new Uint8Array(bytes);
+
+    // Convert to base64 for Gemini
+    const base64Audio = Buffer.from(audioBytes).toString('base64');
+
+    // Get the model - using gemini-pro for audio analysis
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // Create the prompt for transcription
+    const prompt = `
+    Please transcribe the following audio file. Return only the transcribed text without any additional formatting or explanations.
+    If the audio is unclear or cannot be transcribed, return "Unable to transcribe audio clearly."
+    `;
+
+    // Generate content with audio data
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: base64Audio,
+          mimeType: audioFile.type || 'audio/webm'
+        }
+      },
+      prompt
+    ]);
+
+    const response = await result.response;
+    const transcript = response.text();
+
+    return NextResponse.json({ 
+      transcript: transcript.trim(),
+      success: true 
+    });
+
+      } catch (error: any) {
+    console.error('Transcription error:', error);
+    
+    // Handle specific Gemini API errors
+    if (error.message?.includes('audio')) {
+      return NextResponse.json({ 
+        error: 'Audio format not supported. Please try recording again.',
+        success: false 
+      }, { status: 400 });
+    }
+    
+    return NextResponse.json({ 
+      error: 'Failed to transcribe audio. Please try again.',
+      success: false 
+    }, { status: 500 });
   }
 } 

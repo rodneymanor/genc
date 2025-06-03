@@ -10,31 +10,72 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { videoIdea, selectedComponents } = await req.json() as { videoIdea: string, selectedComponents: UserSelectedScriptComponents };
+    const { videoIdea, selectedComponents, voiceProfile } = await req.json() as { 
+      videoIdea: string, 
+      selectedComponents: UserSelectedScriptComponents,
+      voiceProfile?: any // Voice profile data when available
+    };
 
     if (!videoIdea || !selectedComponents) {
       return NextResponse.json({ message: 'Video idea and selected script components are required' }, { status: 400 });
     }
-    if (!selectedComponents.hook || selectedComponents.factsets.length === 0 || !selectedComponents.take || !selectedComponents.outro) {
-      return NextResponse.json({ message: 'All script components (hook, at least one factset, take, outro) must be selected to generate a final script.' }, { status: 400 });
+    if (!selectedComponents.hook || !selectedComponents.bridge || !selectedComponents.goldenNugget || !selectedComponents.wta) {
+      return NextResponse.json({ message: 'All script components (hook, bridge, golden nugget, wta) must be selected to generate a final script.' }, { status: 400 });
     }
 
-    // Construct the prompt for Gemini
+    // Construct the prompt for Gemini with voice profile integration
     let prompt = `You are an expert AI scriptwriter tasked with assembling a cohesive and engaging short-form video script (e.g., for TikTok, YouTube Shorts, Instagram Reels).
 
-Video Idea: "${videoIdea}"
+Video Idea: "${videoIdea}"`;
 
-Assemble the following user-selected components into a flowing script. Ensure smooth transitions between components. The script should be concise and impactful.
+    // Add voice profile instructions if available
+    if (voiceProfile && voiceProfile.voiceProfile) {
+      const coreIdentity = voiceProfile.voiceProfile.coreIdentity;
+      const actionableComponents = voiceProfile.voiceProfile.actionableSystemPromptComponents;
+
+      prompt += `\n\nIMPORTANT: You must write this script in the specific voice and style of "${voiceProfile.name}". Follow these voice guidelines carefully:
+
+VOICE IDENTITY:
+- Persona: ${coreIdentity.suggestedPersonaName || 'Content Creator'}
+- Primary Tones: ${coreIdentity.dominantTones?.join(', ') || 'Conversational'}
+- Secondary Tones: ${coreIdentity.secondaryTones?.join(', ') || 'Engaging'}
+- Unique Characteristics: ${coreIdentity.uniqueIdentifiersOrQuirks?.join(', ') || 'Authentic and relatable'}
+
+WRITING DIRECTIVES:
+${actionableComponents?.voiceDnaSummaryDirectives?.map((directive: string, index: number) => `${index + 1}. ${directive}`).join('\n') || '1. Maintain an authentic, conversational tone\n2. Engage directly with the audience\n3. Deliver clear, valuable insights'}
+
+TONE EXAMPLES:
+${coreIdentity.toneExemplars?.map((example: string) => `- "${example}"`).join('\n') || '- Speak directly to the viewer\n- Use relatable examples\n- Be engaging and enthusiastic'}`;
+
+      // Add negative constraints if available
+      if (actionableComponents?.consolidatedNegativeConstraints) {
+        const constraints = actionableComponents.consolidatedNegativeConstraints;
+        if (constraints.wordsToAvoid?.length) {
+          prompt += `\n\nAVOID THESE WORDS/PHRASES: ${constraints.wordsToAvoid.join(', ')}`;
+        }
+        if (constraints.tonesToAvoid?.length) {
+          prompt += `\nAVOID THESE TONES: ${constraints.tonesToAvoid.join(', ')}`;
+        }
+      }
+
+      prompt += `\n\nEnsure the final script authentically captures this creator's voice while delivering the selected components.`;
+    }
+
+    prompt += `\n\nAssemble the following user-selected components into a flowing script. Ensure smooth transitions between components. The script should be concise and impactful.
 
 Selected Hook:\nTitle: ${selectedComponents.hook.title}\nLines: ${selectedComponents.hook.lines.join('\n')}\n\n`;
 
-    prompt += 'Selected Factset(s):\n';
-    selectedComponents.factsets.forEach((factset, index) => {
-      prompt += `${index + 1}. Category: ${factset.category}\n   Content: ${factset.content}\n\n`;
-    });
-    prompt += `Selected Take:\nPerspective: ${selectedComponents.take.perspective}\nContent: ${selectedComponents.take.content}\n\n`;
+    prompt += `Selected Bridge:\nTitle: ${selectedComponents.bridge.title}\nContent: ${selectedComponents.bridge.content}\n\n`;
 
-    prompt += `Selected Outro:\nTitle: ${selectedComponents.outro.title}\nLines: ${selectedComponents.outro.lines.join('\n')}\n\n`;
+    prompt += `Selected Golden Nugget:\nTitle: ${selectedComponents.goldenNugget.title}\nContent: ${selectedComponents.goldenNugget.content}\n\n`;
+
+    prompt += `Selected WTA (Why To Act):\nTitle: ${selectedComponents.wta.title}\nAction Type: ${selectedComponents.wta.actionType}\nLines: ${selectedComponents.wta.lines.join('\n')}\n\n`;
+
+    if (voiceProfile) {
+      prompt += `Remember: Write this script exactly as "${voiceProfile.name}" would speak. Maintain their authentic voice, tone, and style throughout the entire script.
+
+`;
+    }
 
     prompt += `Please generate the final script text. You can add brief scene directions or narrator cues if it enhances readability (e.g., [VISUAL: ...], NARRATOR:). Focus on a natural flow and engaging delivery. The output should be the script text itself, ready to be used.`;
 

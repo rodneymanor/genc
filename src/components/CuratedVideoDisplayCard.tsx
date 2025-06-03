@@ -40,14 +40,14 @@ const CuratedVideoDisplayCard: React.FC<CuratedVideoDisplayCardProps> = ({
         />
         
         {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center justify-center w-16 h-16 bg-white/90 rounded-full shadow-lg backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="flex items-center justify-center w-16 h-16 bg-background/90 rounded-full shadow-lg backdrop-blur-sm">
             <Play className="h-6 w-6 text-primary ml-1" fill="currentColor" />
           </div>
         </div>
         
         {/* Gradient Overlay for better text readability */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background/60 to-transparent" />
       </div>
 
       {/* Content */}

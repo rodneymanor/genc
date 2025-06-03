@@ -33,21 +33,21 @@ const placeholderVideoData = {
     sevenLaws: {
       hook: {
         text: "The video opens with a surprising statistic about viewer attention spans, immediately piquing interest.",
-        analysis: "Effective use of a 'Pattern Interrupt' and 'Intrigue'. The statistic is relatable and shocking.",
+        analysis: "Effective use of a &apos;Pattern Interrupt&apos; and &apos;Intrigue&apos;. The statistic is relatable and shocking.",
         rating: "Strong"
       },
       bridge: {
-        text: "It then smoothly transitions by promising to reveal the '3 secrets' top creators use.",
+        text: "It then smoothly transitions by promising to reveal the &apos;3 secrets&apos; top creators use.",
         analysis: "Creates a clear value proposition and a curiosity gap, leading the viewer into the main content.",
         rating: "Excellent"
       },
       goldenNuggets: [
-        { point: "Secret 1: The 0.5s Flash Cut - Show, don't just tell, within the first half-second.", analysis: "Visually demonstrated, easy to grasp." },
+        { point: "Secret 1: The 0.5s Flash Cut - Show, don&apos;t just tell, within the first half-second.", analysis: "Visually demonstrated, easy to grasp." },
         { point: "Secret 2: The Open Loop Question - Pose a question that will only be answered later.", analysis: "Keeps viewers engaged for longer." },
         { point: "Secret 3: The Unexpected Visual - Use an out-of-context visual to make them pause.", analysis: "Memorable and effective for scroll-stopping." },
       ],
       wta: { // What To Action
-        text: "The video ends with a challenge: 'Try one of these hook techniques in your next video and tag us!'",
+        text: "The video ends with a challenge: &apos;Try one of these hook techniques in your next video and tag us!&apos;",
         analysis: "Clear, engaging, and encourages user-generated content. Could be stronger by adding a direct subscribe nudge.",
         rating: "Good"
       },
@@ -63,9 +63,9 @@ const placeholderVideoData = {
       stylisticElements: ["Dynamic text overlays", "Sound effects for emphasis", "Use of popular meme formats"],
     },
     adaptationRecommendations: [
-      "Apply the 'Open Loop Question' technique to your product demo videos to maintain viewer interest through feature explanations.",
-      "Incorporate 'Flash Cuts' into your educational content to visually summarize key concepts quickly.",
-      "Experiment with 'Unexpected Visuals' in your marketing ads to make them more memorable on crowded feeds.",
+      "Apply the &apos;Open Loop Question&apos; technique to your product demo videos to maintain viewer interest through feature explanations.",
+      "Incorporate &apos;Flash Cuts&apos; into your educational content to visually summarize key concepts quickly.",
+      "Experiment with &apos;Unexpected Visuals&apos; in your marketing ads to make them more memorable on crowded feeds.",
       "When presenting data, use a surprising statistic as a hook, similar to this video.",
     ],
   },
@@ -83,7 +83,7 @@ const AnalysisDetailCard = ({ title, content, icon: Icon, rating }) => (
       </div>
     </CardHeader>
     <CardContent className="text-sm text-muted-foreground space-y-2">
-      <p className="font-medium text-foreground">Identified Text/Segment: <span className="italic">"{content.text}"</span></p>
+      <p className="font-medium text-foreground">Identified Text/Segment: <span className="italic">&quot;{content.text}&quot;</span></p>
       <p>Analysis: {content.analysis}</p>
     </CardContent>
   </Card>
@@ -157,7 +157,7 @@ export default function VideoBreakdownPage() {
             <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center"><Bookmark className="h-6 w-6 mr-2 text-primary"/>Core Message & Style</CardTitle>
-                <CardDescription>Understanding the video's essence and delivery.</CardDescription>
+                <CardDescription>Understanding the video&apos;s essence and delivery.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div>

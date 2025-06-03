@@ -168,7 +168,7 @@ export const CardHeader = ({ content }: { content: GenericContentData }) => (
               href={content.user.profileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-500 transition-all duration-75 hover:underline"
+              className="text-sm text-muted-foreground transition-all duration-75 hover:underline"
             >
               @{truncate(content.user.screenName, 16)}
             </a>
@@ -179,7 +179,7 @@ export const CardHeader = ({ content }: { content: GenericContentData }) => (
     {content.sourceUrl && (
       <a href={content.sourceUrl} target="_blank" rel="noopener noreferrer" title="View original source">
         <span className="sr-only">Link to content</span>
-        <LinkIcon className="size-5 items-start text-gray-400 transition-all ease-in-out hover:scale-105 hover:text-gray-600" />
+        <LinkIcon className="size-5 items-start text-muted-foreground transition-all ease-in-out hover:scale-105 hover:text-foreground" />
       </a>
     )}
   </div>
@@ -288,8 +288,8 @@ export const GenericContentDisplay = ({
       <CardMedia content={content} />
       {/* You can add a CardFooter here if needed, e.g., for actions or post date */}
       {content.createdAt && (
-        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-2 pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground">
                 Posted on: {new Date(content.createdAt).toLocaleDateString()}
             </p>
         </div>

@@ -1,5 +1,16 @@
 /* src/styles/perplexity-sidebar.css */
 
+/* Override react-pro-sidebar default border */
+.perplexity-sidebar .ps-sidebar-container {
+  border-right: none !important;
+  overflow: visible !important; /* Allow tooltips to escape */
+}
+
+/* Ensure tooltips from sidebar appear above everything */
+[data-radix-tooltip-content] {
+  z-index: 999999 !important;
+}
+
 /* Ensure this targets the root element of your PerplexitySidebar component if it doesn't have the .perplexity-sidebar class directly */
 .perplexity-sidebar,
 .perplexity-sidebar .ps-sidebar-container {
@@ -7,15 +18,15 @@
   /* Use CSS variables from your globals.css for background and border */
   /* The example uses rgba with backdrop-filter. We'll use solid colors for now and can add blur later if needed. */
   background-color: hsl(var(--sidebar-background));
-  border-right: 1px solid hsl(var(--sidebar-border));
   color: hsl(var(--sidebar-foreground));
-  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
   min-height: 100dvh; /* Primary modern approach */
   height: -webkit-fill-available; /* iOS Safari */
   height: -moz-available;          /* Firefox (older) */
   height: auto; /* Fallback and ensures it can grow if content dictates and not otherwise constrained */
   display: flex;
   flex-direction: column;
+  overflow: visible !important; /* Allow tooltips to escape */
   /* Default collapsed width - can be overridden by collapsedWidth prop on Sidebar */
   /* width: 80px;  You can set this with collapsedWidth prop in JSX for better control */
 }
@@ -23,6 +34,7 @@
 /* Adjust Menu and MenuItem styles to match Perplexity */
 .perplexity-sidebar .ps-menu-root {
   padding-top: 0.5rem;
+  overflow: visible !important; /* Allow tooltips to escape */
 }
 
 .perplexity-sidebar .ps-menuitem-root > .ps-menu-button {

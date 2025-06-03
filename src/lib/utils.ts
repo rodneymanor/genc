@@ -100,3 +100,31 @@ export function formatNumber(num: number): string {
   }
   return num.toString();
 }
+
+// Utility function to capitalize the first letter of each word in a name
+export function capitalizeUserName(name: string | null | undefined): string {
+  if (!name || typeof name !== 'string') {
+    return '';
+  }
+  
+  return name
+    .trim()
+    .split(' ')
+    .map(word => {
+      if (word.length === 0) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+// Alternative function for just capitalizing the first letter of the entire string
+export function capitalizeFirst(str: string | null | undefined): string {
+  if (!str || typeof str !== 'string') {
+    return '';
+  }
+  
+  const trimmed = str.trim();
+  if (trimmed.length === 0) return trimmed;
+  
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}

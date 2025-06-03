@@ -240,7 +240,7 @@ export function SocialMediaCard({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="font-semibold">{username}</p>
-                <p className="text-sm text-gray-300 line-clamp-2 mt-1">{description}</p>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{description}</p>
                 
                 {/* Hashtags */}
                 {hashtags.length > 0 && (
@@ -251,7 +251,7 @@ export function SocialMediaCard({
                       </span>
                     ))}
                     {hashtags.length > 3 && (
-                      <span className="text-xs text-gray-400">+{hashtags.length - 3} more</span>
+                      <span className="text-xs text-muted-foreground">+{hashtags.length - 3} more</span>
                     )}
                   </div>
                 )}
@@ -275,7 +275,7 @@ export function SocialMediaCard({
 
             {/* Platform-specific footer */}
             {platform === 'tiktok' && (
-              <div className="flex items-center mt-2 text-sm text-gray-300">
+              <div className="flex items-center mt-2 text-sm text-muted-foreground">
                 <Music className="w-3 h-3 mr-1" />
                 <p className="truncate">Original sound - {username}</p>
               </div>

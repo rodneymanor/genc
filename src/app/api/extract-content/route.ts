@@ -96,12 +96,7 @@ export async function POST(req: NextRequest) {
 
                 if (isRestrictedPage) {
                     logs.push(`[Extract Content] Detected restriction page for ${url} with title: "${$('title').text()}". Treating as extraction failure.`);
-                    extractedText = `Content extraction failed for ${new URL(url).hostname}: The page indicates it's restricted or requires browser interaction (e.g., CAPTCHA, login).`;
-                     // We will let this fall through to the scrubText and then return normally,
-                    // but the extractedText will be this error message.
-                    // Alternatively, we could throw an error here to be caught by the catch block, 
-                    // but then we'd need to ensure the message is preserved.
-                    // For now, setting extractedText to the error message is cleaner.
+                    extractedText = `Content not accessible from ${new URL(url).hostname}: The page is protected or requires browser interaction (e.g., CAPTCHA, login, Cloudflare challenge).`;
                 } else {
                     // Basic extraction - try to get main content areas
                     let content = '';
@@ -138,9 +133,10 @@ export async function POST(req: NextRequest) {
                 logs.push(`[Extract Content] Error fetching website content for URL: ${url}. Error: ${errorMessage}. Full error object (stringified): ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
                 console.error(`[Extract Content API] Error fetching website content for ${url}:`, error); 
                 
-                // Return a 500 but ensure the extractedText IS the error message for the client to use
-                extractedText = `Failed to fetch or process content from ${new URL(url).hostname}: ${errorMessage}.`;
-                return NextResponse.json({ logs, extractedText, error: errorMessage }, { status: 500 });
+                // Return success with error message in extractedText so research can continue with other sources
+                extractedText = `Failed to fetch content from ${new URL(url).hostname}: ${errorMessage}`;
+                logs.push(`[Extract Content] Returning graceful failure message for ${url}`);
+                // Continue to normal response processing instead of returning 500
             }
         }
 

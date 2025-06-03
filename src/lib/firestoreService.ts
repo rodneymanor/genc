@@ -12,7 +12,8 @@ import {
   where,
   getDocs,
   orderBy,
-  limit
+  limit,
+  writeBatch
 } from 'firebase/firestore';
 
 export interface ScriptData {
@@ -45,6 +46,45 @@ export interface AnalyzedVideoData {
   createdAt?: Timestamp | Date;
   updatedAt?: Timestamp | Date;
   authorUsername?: string; // Added based on webhook route usage
+}
+
+// Interface for voice profile data
+export interface VoiceProfileData {
+  id?: string; // Firestore document ID
+  userId: string;
+  name: string; // Display name for the voice (e.g., "@username Voice Clone")
+  platform: string; // 'instagram', 'tiktok', etc.
+  sourceProfile: {
+    username: string;
+    profileUrl: string;
+    displayName?: string;
+    profileImage?: string;
+  };
+  voiceProfile: {
+    coreIdentity: {
+      suggestedPersonaName: string;
+      dominantTones: string[];
+      secondaryTones: string[];
+      toneExemplars: string[];
+      uniqueIdentifiersOrQuirks: string[];
+    };
+    contentStrategyBlueprints?: any; // Can be expanded based on API response
+    linguisticAndDeliveryEssence?: any;
+    actionableSystemPromptComponents: {
+      voiceDnaSummaryDirectives: string[];
+      consolidatedNegativeConstraints?: any;
+    };
+  };
+  analysisData: {
+    videosAnalyzed: number;
+    totalVideosFound: number;
+    createdAt: string; // ISO string date of analysis
+  };
+  status: 'ready' | 'training' | 'error';
+  isActive: boolean;
+  postsCreated: number;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
 }
 
 /**
@@ -88,14 +128,16 @@ export const saveScript = async (
 /**
  * Fetches all scripts for a given user, ordered by last updated.
  */
-export const getUserScripts = async (userId: string): Promise<ScriptData[]> => {
+export const getUserScripts = async (userId: string, limitCount?: number): Promise<ScriptData[]> => {
   if (!userId) {
     console.error("User ID is required to fetch scripts.");
     return [];
   }
   try {
     const userScriptsCollectionRef = collection(db, `users/${userId}/scripts`);
-    const q = query(userScriptsCollectionRef, orderBy("updatedAt", "desc"));
+    const q = limitCount
+      ? query(userScriptsCollectionRef, orderBy("updatedAt", "desc"), limit(limitCount))
+      : query(userScriptsCollectionRef, orderBy("updatedAt", "desc"));
     const querySnapshot = await getDocs(q);
     const scripts: ScriptData[] = [];
     querySnapshot.forEach((doc) => {
@@ -197,5 +239,238 @@ export const getAnalyzedVideos = async (count?: number): Promise<AnalyzedVideoDa
   } catch (error) {
     console.error("Error fetching analyzed videos:", error);
     return [];
+  }
+};
+
+/**
+ * Saves a voice profile for a given user.
+ */
+export const saveVoiceProfile = async (
+  userId: string,
+  voiceProfileData: Omit<VoiceProfileData, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+): Promise<string> => {
+  if (!userId) {
+    throw new Error("User ID is required to save a voice profile.");
+  }
+
+  try {
+    const now = serverTimestamp();
+    const userVoicesCollectionRef = collection(db, `users/${userId}/voiceProfiles`);
+    
+    const newVoiceRef = await addDoc(userVoicesCollectionRef, {
+      userId,
+      ...voiceProfileData,
+      createdAt: now,
+      updatedAt: now,
+    });
+    
+    console.log("New voice profile saved with ID: ", newVoiceRef.id);
+    return newVoiceRef.id;
+  } catch (error) {
+    console.error("Error saving voice profile to Firestore:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to save voice profile: ${errorMessage}`);
+  }
+};
+
+/**
+ * Fetches all voice profiles for a given user, ordered by creation date.
+ */
+export const getUserVoiceProfiles = async (userId: string, limitCount?: number): Promise<VoiceProfileData[]> => {
+  if (!userId) {
+    console.error("User ID is required to fetch voice profiles.");
+    return [];
+  }
+  
+  try {
+    const userVoicesCollectionRef = collection(db, `users/${userId}/voiceProfiles`);
+    const q = limitCount
+      ? query(userVoicesCollectionRef, orderBy("createdAt", "desc"), limit(limitCount))
+      : query(userVoicesCollectionRef, orderBy("createdAt", "desc"));
+    
+    const querySnapshot = await getDocs(q);
+    const voiceProfiles: VoiceProfileData[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      voiceProfiles.push({ id: doc.id, ...doc.data() } as VoiceProfileData);
+    });
+    
+    return voiceProfiles;
+  } catch (error) {
+    console.error("Error fetching user voice profiles:", error);
+    return [];
+  }
+};
+
+/**
+ * Fetches a single voice profile by its ID and user ID.
+ */
+export const getVoiceProfileById = async (userId: string, voiceProfileId: string): Promise<VoiceProfileData | null> => {
+  if (!userId || !voiceProfileId) {
+    console.error("User ID and Voice Profile ID are required to fetch a voice profile.");
+    return null;
+  }
+  
+  try {
+    const voiceProfileRef = doc(db, `users/${userId}/voiceProfiles`, voiceProfileId);
+    const docSnap = await getDoc(voiceProfileRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as VoiceProfileData;
+    }
+    
+    console.warn("No such voice profile found!");
+    return null;
+  } catch (error) {
+    console.error("Error fetching voice profile by ID:", error);
+    return null;
+  }
+};
+
+/**
+ * Updates a voice profile (e.g., to change active status, increment posts created).
+ */
+export const updateVoiceProfile = async (
+  userId: string,
+  voiceProfileId: string,
+  updates: Partial<Omit<VoiceProfileData, 'id' | 'userId' | 'createdAt'>>
+): Promise<void> => {
+  if (!userId || !voiceProfileId) {
+    throw new Error("User ID and Voice Profile ID are required to update a voice profile.");
+  }
+
+  try {
+    const voiceProfileRef = doc(db, `users/${userId}/voiceProfiles`, voiceProfileId);
+    await updateDoc(voiceProfileRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log("Voice profile updated with ID: ", voiceProfileId);
+  } catch (error) {
+    console.error("Error updating voice profile:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to update voice profile: ${errorMessage}`);
+  }
+};
+
+/**
+ * Deletes a voice profile.
+ */
+export const deleteVoiceProfile = async (userId: string, voiceProfileId: string): Promise<void> => {
+  if (!userId || !voiceProfileId) {
+    throw new Error("User ID and Voice Profile ID are required to delete a voice profile.");
+  }
+
+  try {
+    const voiceProfileRef = doc(db, `users/${userId}/voiceProfiles`, voiceProfileId);
+    await updateDoc(voiceProfileRef, {
+      status: 'deleted',
+      updatedAt: serverTimestamp(),
+    });
+    
+    console.log("Voice profile marked as deleted with ID: ", voiceProfileId);
+  } catch (error) {
+    console.error("Error deleting voice profile:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to delete voice profile: ${errorMessage}`);
+  }
+};
+
+/**
+ * Sets a voice profile as active and deactivates all others for the user.
+ */
+export const setActiveVoiceProfile = async (userId: string, voiceProfileId: string): Promise<void> => {
+  if (!userId || !voiceProfileId) {
+    throw new Error("User ID and Voice Profile ID are required to set active voice profile.");
+  }
+
+  try {
+    const userVoicesCollectionRef = collection(db, `users/${userId}/voiceProfiles`);
+    
+    // First, deactivate all voice profiles for this user
+    const allVoicesQuery = query(userVoicesCollectionRef, where("isActive", "==", true));
+    const querySnapshot = await getDocs(allVoicesQuery);
+    
+    const batch = writeBatch(db);
+    querySnapshot.forEach((doc) => {
+      batch.update(doc.ref, { isActive: false, updatedAt: serverTimestamp() });
+    });
+    
+    // Then activate the selected voice profile
+    const targetVoiceRef = doc(db, `users/${userId}/voiceProfiles`, voiceProfileId);
+    batch.update(targetVoiceRef, { isActive: true, updatedAt: serverTimestamp() });
+    
+    await batch.commit();
+    console.log("Voice profile activated with ID: ", voiceProfileId);
+  } catch (error) {
+    console.error("Error setting active voice profile:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to set active voice profile: ${errorMessage}`);
+  }
+};
+
+/**
+ * Gets the currently active voice profile for a user.
+ */
+export const getActiveVoiceProfile = async (userId: string): Promise<VoiceProfileData | null> => {
+  if (!userId) {
+    console.error("User ID is required to fetch active voice profile.");
+    return null;
+  }
+
+  try {
+    const userVoicesCollectionRef = collection(db, `users/${userId}/voiceProfiles`);
+    const activeVoiceQuery = query(
+      userVoicesCollectionRef, 
+      where("isActive", "==", true),
+      where("status", "==", "ready"),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(activeVoiceQuery);
+    
+    if (querySnapshot.empty) {
+      console.log("No active voice profile found for user:", userId);
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as VoiceProfileData;
+  } catch (error) {
+    console.error("Error fetching active voice profile:", error);
+    return null;
+  }
+};
+
+/**
+ * Deactivates all voice profiles for a user.
+ */
+export const deactivateAllVoiceProfiles = async (userId: string): Promise<void> => {
+  if (!userId) {
+    throw new Error("User ID is required to deactivate voice profiles.");
+  }
+
+  try {
+    const userVoicesCollectionRef = collection(db, `users/${userId}/voiceProfiles`);
+    const activeVoicesQuery = query(userVoicesCollectionRef, where("isActive", "==", true));
+    const querySnapshot = await getDocs(activeVoicesQuery);
+    
+    if (querySnapshot.empty) {
+      console.log("No active voice profiles to deactivate for user:", userId);
+      return;
+    }
+
+    const batch = writeBatch(db);
+    querySnapshot.forEach((doc) => {
+      batch.update(doc.ref, { isActive: false, updatedAt: serverTimestamp() });
+    });
+    
+    await batch.commit();
+    console.log("All voice profiles deactivated for user:", userId);
+  } catch (error) {
+    console.error("Error deactivating voice profiles:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to deactivate voice profiles: ${errorMessage}`);
   }
 }; 

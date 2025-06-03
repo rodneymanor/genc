@@ -23,7 +23,7 @@ export default function BlogCard({
             priority={priority}
           />
         )}
-        {!data.image && <div className="bg-gray-200 h-[180px] mb-4 rounded" />}
+        {!data.image && <div className="bg-muted h-[180px] mb-4 rounded" />}
         <p className="mb-2">
           <time
             dateTime={data.publishedAt}

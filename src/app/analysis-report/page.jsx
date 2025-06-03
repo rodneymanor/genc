@@ -152,7 +152,7 @@ const AnalysisReportPanel = ({ analysisData }) => {
               <strong>Complex Word Suggestions:</strong>
               <ul className="list-disc list-inside pl-4">
                 {hemingwayFeedback.complexWordSuggestions.map((cw, i) => (
-                  <li key={i}>"{cw.original}" → "{cw.suggestion}"</li>
+                  <li key={i}>&quot;{cw.original}&quot; → &quot;{cw.suggestion}&quot;</li>
                 ))}
               </ul>
             </div>
@@ -165,8 +165,8 @@ const AnalysisReportPanel = ({ analysisData }) => {
           {actionableRecommendations.map((rec, i) => (
             <div key={rec.id} className="p-4 border rounded-md bg-muted/20">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Recommendation {i + 1}</p>
-              <p><strong>Before:</strong> <span className="italic text-red-700 dark:text-red-400">"{rec.before}"</span></p>
-              <p><strong>After:</strong> <span className="italic text-green-700 dark:text-green-400">"{rec.after}"</span></p>
+              <p><strong>Before:</strong> <span className="italic text-red-700 dark:text-red-400">&quot;{rec.before}&quot;</span></p>
+              <p><strong>After:</strong> <span className="italic text-green-700 dark:text-green-400">&quot;{rec.after}&quot;</span></p>
               <p><strong>Reasoning:</strong> {rec.reasoning}</p>
             </div>
           ))}

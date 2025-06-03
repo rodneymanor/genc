@@ -16,6 +16,8 @@ const stepConfig: { [key: string]: { description: string; order: number; isError
   search: { description: "Searching for relevant sources...", order: 1 },
   search_empty: { description: "No sources found. Try a different topic or wording.", order: 1, isNeutral: true },
   search_failed: { description: "Search for sources failed. Please try again.", order: 1, isError: true },
+  transcribe: { description: "Transcribing video content...", order: 1.5 },
+  transcribe_failed: { description: "Video transcription failed. Please check the URL and try again.", order: 1.5, isError: true },
   extract: { description: "Extracting content from sources...", order: 2 },
   extract_issues: { description: "Some content could not be extracted. Check Research tab for details.", order: 2, isNeutral: true }, // Neutral, as some might succeed
   extract_failed: { description: "Content extraction failed for all sources.", order: 2, isError: true },

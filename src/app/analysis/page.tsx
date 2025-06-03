@@ -71,7 +71,7 @@ export default function AnalysisPage() {
 
   // useEffect to handle URL from query parameters
   useEffect(() => {
-    const urlFromQuery = searchParams.get('videoUrl');
+    const urlFromQuery = searchParams?.get('videoUrl');
     if (urlFromQuery) {
       const decodedUrl = decodeURIComponent(urlFromQuery);
       setVideoUrl(decodedUrl); // Update the input field

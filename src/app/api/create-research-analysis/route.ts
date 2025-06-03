@@ -28,13 +28,65 @@ interface SourceContent {
 export async function POST(req: NextRequest) {
     const logs: string[] = [];
     try {
-        const { videoIdea, sourceContents } = await req.json() as { videoIdea: string, sourceContents: SourceContent[] };
+        logs.push(`[Create Research Analysis] Starting request processing...`);
+        
+        const body = await req.json();
+        logs.push(`[Create Research Analysis] Request body received:`, JSON.stringify({
+            hasVideoIdea: !!body.videoIdea,
+            videoIdeaLength: body.videoIdea?.length || 0,
+            hasSourceContents: !!body.sourceContents,
+            sourceContentsType: Array.isArray(body.sourceContents) ? 'array' : typeof body.sourceContents,
+            sourceContentsLength: Array.isArray(body.sourceContents) ? body.sourceContents.length : 'N/A'
+        }));
 
-        if (!videoIdea || !sourceContents || !Array.isArray(sourceContents) || sourceContents.length === 0) {
-            return NextResponse.json({ error: 'Video idea and a non-empty array of source contents are required' }, { status: 400 });
+        const { videoIdea, sourceContents } = body as { videoIdea: string, sourceContents: SourceContent[] };
+
+        // More detailed validation with specific error messages
+        if (!videoIdea) {
+            logs.push(`[Create Research Analysis] Validation failed: Missing videoIdea`);
+            return NextResponse.json({ 
+                error: 'videoIdea is required and cannot be empty',
+                logs 
+            }, { status: 400 });
         }
 
-        logs.push(`[Create Research Analysis] Received video idea: "${videoIdea}"`);
+        if (!sourceContents) {
+            logs.push(`[Create Research Analysis] Validation failed: Missing sourceContents`);
+            return NextResponse.json({ 
+                error: 'sourceContents is required',
+                logs 
+            }, { status: 400 });
+        }
+
+        if (!Array.isArray(sourceContents)) {
+            logs.push(`[Create Research Analysis] Validation failed: sourceContents is not an array, type: ${typeof sourceContents}`);
+            return NextResponse.json({ 
+                error: 'sourceContents must be an array',
+                logs 
+            }, { status: 400 });
+        }
+
+        if (sourceContents.length === 0) {
+            logs.push(`[Create Research Analysis] Validation failed: sourceContents array is empty`);
+            return NextResponse.json({ 
+                error: 'sourceContents array cannot be empty',
+                logs 
+            }, { status: 400 });
+        }
+
+        // Validate each source content
+        for (let i = 0; i < sourceContents.length; i++) {
+            const source = sourceContents[i];
+            if (!source.link || !source.title) {
+                logs.push(`[Create Research Analysis] Validation failed: Source ${i} missing required fields - link: ${!!source.link}, title: ${!!source.title}`);
+                return NextResponse.json({ 
+                    error: `Source ${i} must have both 'link' and 'title' properties`,
+                    logs 
+                }, { status: 400 });
+            }
+        }
+
+        logs.push(`[Create Research Analysis] Validation passed - Video idea: "${videoIdea}"`);
         logs.push(`[Create Research Analysis] Received ${sourceContents.length} source contents.`);
 
         let promptContent = `Video Idea: "${videoIdea}"\n\nBased on the following source materials, please synthesize a comprehensive research resource or briefing document of 300-400 words. This resource should consolidate the key information, facts, and insights relevant to the video idea. This document will be used as a foundational text to generate various parts of a video script. Focus on clarity, accuracy, and relevance to the video idea.\n\nSource Materials:\n`;
@@ -53,6 +105,7 @@ export async function POST(req: NextRequest) {
         });
 
         logs.push("[Create Research Analysis] Constructed prompt for Gemini.");
+        logs.push(`[Create Research Analysis] Prompt length: ${promptContent.length} characters`);
         // console.log("Prompt for Gemini:", promptContent); // For debugging
 
         const result = await model.generateContent(promptContent);
@@ -80,6 +133,7 @@ export async function POST(req: NextRequest) {
         if (error.stack) {
             logs.push(`Stack: ${error.stack}`);
         }
+        console.error('[Create Research Analysis] Full error details:', error);
         return NextResponse.json({ logs, error: error.message || 'An unknown error occurred' }, { status: 500 });
     }
 } 

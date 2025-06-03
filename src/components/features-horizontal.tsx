@@ -288,7 +288,7 @@ export default function Features({
                   muted
                 />
               ) : (
-                <div className="aspect-auto h-full w-full rounded-xl border border-neutral-300/50 bg-gray-200 p-1 min-h-[600px]"></div>
+                <div className="aspect-auto h-full w-full rounded-xl border border-border bg-muted p-1 min-h-[600px]"></div>
               )}
               <BorderBeam
                 size={400}

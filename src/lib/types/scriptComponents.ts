@@ -3,6 +3,23 @@ export interface ScriptHook {
   lines: string[];
 }
 
+export interface ScriptBridge {
+  title: string;
+  content: string;
+}
+
+export interface ScriptGoldenNugget {
+  title: string;
+  content: string;
+}
+
+export interface ScriptWTA {
+  title: string;
+  actionType: string;
+  lines: string[];
+}
+
+// Legacy interfaces for backward compatibility
 export interface ScriptFactset {
   category: string;
   content: string;
@@ -20,14 +37,14 @@ export interface ScriptOutro {
 
 export interface ScriptComponents {
   hooks: ScriptHook[];
-  factsets: ScriptFactset[];
-  takes: ScriptTake[];
-  outros: ScriptOutro[];
+  bridges: ScriptBridge[];
+  goldenNuggets: ScriptGoldenNugget[];
+  wtas: ScriptWTA[];
 }
 
 export interface UserSelectedScriptComponents {
   hook: ScriptHook | null;
-  factsets: ScriptFactset[];
-  take: ScriptTake | null;
-  outro: ScriptOutro | null;
+  bridge: ScriptBridge | null;
+  goldenNugget: ScriptGoldenNugget | null;
+  wta: ScriptWTA | null;
 } 

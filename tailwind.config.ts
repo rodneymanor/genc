@@ -1,12 +1,49 @@
 import type { Config } from "tailwindcss";
 
 const config = {
-  // darkMode: ["class"],
+    darkMode: ["class"],
+    // darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
+    "./src/components/magicui/**/*.{ts,tsx}",
+    "./src/components/ui/**/*.{ts,tsx}",
+  ],
+  safelist: [
+    // Gradient classes that might not be detected by purging
+    {
+      pattern: /bg-gradient-to-(r|l|t|b|tr|tl|br|bl)/,
+    },
+    {
+      pattern: /from-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /to-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    {
+      pattern: /via-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100|200|300|400|500|600|700|800|900)/,
+    },
+    // Theme color gradients
+    'bg-gradient-to-r',
+    'from-primary',
+    'to-primary',
+    'from-accent',
+    'to-accent',
+    'from-secondary',
+    'to-secondary',
+    'group-hover:bg-gradient-to-r',
+    'group-hover:from-primary',
+    'group-hover:to-accent',
+    'group-focus-within:bg-gradient-to-r',
+    'group-focus-within:from-primary',
+    'group-focus-within:to-accent',
+    // Animation classes for MagicUI
+    'animate-pulse',
+    'animate-spin',
+    'animate-bounce',
+    'animate-ping',
   ],
   prefix: "",
   theme: {
@@ -18,16 +55,20 @@ const config = {
   		}
   	},
   	extend: {
-      fontFamily: {
-        sans: ["var(--font-bricolage-grotesque)"],
-        "bricolage-grotesque": ["var(--font-bricolage-grotesque)"],
-      },
-      width: {
-        'input-lg': '640px',
-      },
-      height: {
-        'input-lg': '120px',
-      },
+  		fontFamily: {
+  			sans: [
+  				'var(--font-inter)'
+  			],
+  			'inter': [
+  				'var(--font-inter)'
+  			]
+  		},
+  		width: {
+  			'input-lg': '640px'
+  		},
+  		height: {
+  			'input-lg': '120px'
+  		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -81,7 +122,7 @@ const config = {
   			borderMain: '#E5E7EB',
   			borderMainDark: '#374151',
   			'accent-magenta': '#E6007E',
-  			'accent-cyan': '#00B8D4',
+  			'accent-cyan': '#00B8D4'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -94,7 +135,9 @@ const config = {
   			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			ripple: 'ripple var(--duration,2s) ease calc(var(--i, 0)*.2s) infinite'
+  			ripple: 'ripple var(--duration,2s) ease calc(var(--i, 0)*.2s) infinite',
+  			orbit: 'orbit calc(var(--duration)*1s) linear infinite',
+  			pulse: 'pulse var(--duration, 2s) ease-out infinite'
   		},
   		keyframes: {
   			marquee: {
@@ -140,6 +183,22 @@ const config = {
   				},
   				'50%': {
   					transform: 'translate(-50%, -50%) scale(0.9)'
+  				}
+  			},
+  			orbit: {
+  				'0%': {
+  					transform: 'rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg))'
+  				},
+  				'100%': {
+  					transform: 'rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg))'
+  				}
+  			},
+  			pulse: {
+  				'0%, 100%': {
+  					boxShadow: '0 0 0 0 var(--pulse-color)'
+  				},
+  				'50%': {
+  					boxShadow: '0 0 0 2px var(--pulse-color)'
   				}
   			}
   		}

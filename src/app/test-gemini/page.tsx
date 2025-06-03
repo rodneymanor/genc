@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import AppSidebar from "@/components/layout/AppSidebar";
+import PerplexitySidebar from "@/components/layout/PerplexitySidebar";
 import MainContent from "@/components/layout/MainContent";
 import { AppProvider } from "@/contexts/AppContext";
 
@@ -38,7 +38,7 @@ export default function TestGeminiPage() {
   return (
     <AppProvider>
       <div className="flex flex-row min-h-screen bg-background">
-        <AppSidebar />
+        <PerplexitySidebar />
         <MainContent>
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold mb-4">Test Gemini Source Discovery</h1>

@@ -6,7 +6,7 @@
   html {
     height: 100%;
     touch-action: manipulation; /* Prevent iOS viewport resize */
-    @apply font-bricolage-grotesque; /* Changed from font-poppins to font-bricolage-grotesque */
+    @apply font-inter; /* Changed from font-bricolage-grotesque to font-inter */
   }
 
   body {
@@ -23,54 +23,54 @@
   }
 
   :root {
-    /* Updated base colors */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    
-    /* Updated primary colors */
+    /* Updated to user's new color palette */
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 9%; /* Near Black */
+    --card: 0 0% 100%; /* Match background */
+    --card-foreground: 0 0% 9%; /* Match foreground */
+    --popover: 0 0% 100%; /* Match background */
+    --popover-foreground: 0 0% 9%; /* Match foreground */
+
+    /* Primary colors */
     --primary: 0 0% 9%; /* Black */
     --primary-foreground: 0 0% 100%; /* White */
-    
-    /* Updated secondary colors */
-    --secondary: 0 0% 0%/5%; /* Very light grey (transparent black) */
-    --secondary-foreground: 0 0% 9%; /* Black */
-    
-    /* Updated muted colors */
-    --muted: 0 0% 94.9%;
-    --muted-foreground: 0 0% 50%;
-    
-    /* Updated accent colors */
-    --accent: 0 0% 93%;
-    --accent-foreground: 0 0% 9%;
-    
-    /* Updated destructive colors */
-    --destructive: #fcdce0; /* Per user spec */
-    --destructive-foreground: 210 40% 98%; /* Per user spec */
-    
-    /* Updated border, input, ring */
-    --border: 0 0% 0%/10%;
-    --input: 0 0% 0%/10%;
-    --ring: 209 83% 65%; /* Blueish ring, per user spec */
-    
-    --radius: 0.5rem; /* Existing, no change */
 
-    /* New variables from user spec */
-    --muted-foreground-2: 0 0% 25%;
-    --text-placeholder: 0 0% 0%/20%;
-    --popover-hover: 0 0% 94.9%;
-    --popover-hover-solid: 0 0% 94.9%;
-    --popover-elevated: 0 0% 0%;
-    --secondary-hover: 0 0% 0%/4%;
-    --destructive-solid: #f24e62;
-    --unriddle-orange: 28 100% 50%;
-    --badge-light-blue: 210 100% 92%;
-    --badge-blue: 211 100% 50%;
-    
-    /* New highlight colors */
+    /* Secondary colors */
+    --secondary: 0 0% 0% / 5%; /* Very light grey - using opacity notation */
+    --secondary-foreground: 0 0% 9%; /* Match foreground */
+
+    /* Muted colors */
+    --muted: 0 0% 94.9%; /* Light grey */
+    --muted-foreground: 0 0% 45%; /* Medium grey for muted text */
+
+    /* Accent colors */
+    --accent: 0 0% 93%; /* Light grey */
+    --accent-foreground: 0 0% 9%; /* Match foreground */
+
+    /* Keep existing destructive colors */
+    --destructive: 0 65% 85%; /* Soft red background */
+    --destructive-foreground: 0 70% 25%; /* Darker red text */
+
+    /* Border, input, ring */
+    --border: 0 0% 0% / 10%; /* Light border - using opacity notation */
+    --input: 0 0% 0% / 10%; /* Match border */
+    --ring: 0 0% 9%; /* Use primary color for focus rings */
+
+    --radius: 0.5rem; /* Keep existing */
+
+    /* Updated muted variants for better hierarchy */
+    --muted-foreground-2: 0 0% 35%; /* Darker muted text option */
+    --text-placeholder: 0 0% 50% / 40%; /* Placeholder text */
+    --popover-hover: 0 0% 96%; /* Slightly darker than background for hovers */
+    --popover-hover-solid: 0 0% 96%;
+    --popover-elevated: 0 0% 9%; /* Match foreground */
+    --secondary-hover: 0 0% 0% / 8%; /* Slightly more visible on hover */
+    --destructive-solid: 0 70% 50%; /* Keep existing red */
+    --unriddle-orange: 28 100% 50%; /* Keep existing orange */
+    --badge-light-blue: 220 40% 92%; /* Keep for now */
+    --badge-blue: 220 80% 50%; /* Keep for now */
+
+    /* New highlight colors - keep existing for now */
     --highlight-orange: #fbecdd;
     --highlight-orange-border: #fadec9;
     --highlight-yellow: #fbf3db;
@@ -87,20 +87,24 @@
     --highlight-default: #fff;
     --highlight-default-border: #ededed;
 
-    /* Existing chart and sidebar colors - retained for now, can be updated if needed */
+    /* Chart colors - keep existing for now */
     --chart-1: 198 100% 50%;
     --chart-2: 200 100% 35%;
     --chart-3: 197 100% 94%;
     --chart-4: 195 90% 50%;
     --chart-5: 205 90% 50%;
-    --sidebar-background: 220 13% 96%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 198 100% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 197 100% 94%;
-    --sidebar-accent-foreground: 200 100% 35%;
-    --sidebar-border: 0 0% 94%;
-    --sidebar-ring: 198 100% 50%;
+
+    /* Updated sidebar colors per user specification */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%; /* Use primary color */
+    --sidebar-primary-foreground: 0 0% 98%; /* White */
+    --sidebar-accent: 240 4.8% 95.9%; /* Match accent */
+    --sidebar-accent-foreground: 240 5.9% 10%; /* Match foreground */
+    --sidebar-border: 220 13% 91%; /* Match border */
+    --sidebar-ring: 217.2 91.2% 59.8%; /* Match primary */
+
+    /* Keep existing special colors */
     --background-super-color-200: 28.9% 0.06 230.94;
     --color-1: oklch(66.2% 0.225 25.9);
     --color-2: oklch(60.4% 0.26 302);
@@ -134,14 +138,14 @@
     --chart-3: 195 70% 40%;
     --chart-4: 200 60% 35%;
     --chart-5: 205 50% 30%;
-    --sidebar-background: 0 0% 15%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 198 90% 50%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 25%;
-    --sidebar-accent-foreground: 198 90% 70%;
-    --sidebar-border: 0 0% 25%;
-    --sidebar-ring: 198 90% 50%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
     --background-super-color-200: 28.9% 0.06 230.94;
     --color-1: oklch(66.2% 0.225 25.9);
     --color-2: oklch(60.4% 0.26 302);
@@ -179,6 +183,7 @@
     --animate-shine: shine var(--duration) infinite linear;
     --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
     --animate-aurora: aurora 8s ease-in-out infinite alternate;
+    --animate-pulse: pulse var(--duration) ease-out infinite;
   }
 
   * {
@@ -236,6 +241,30 @@
     transform: rotate(-5deg) scale(0.9);
     }
   }
+  @keyframes orbit {
+  0% {
+    transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+    }
+  100% {
+    transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+    }
+  }
+  @keyframes orbit {
+  0% {
+    transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+    }
+  100% {
+    transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+    }
+  }
+  @keyframes pulse {
+  0%, 100% {
+    boxShadow: 0 0 0 0 var(--pulse-color);
+    }
+  50% {
+    boxShadow: 0 0 0 2px var(--pulse-color);
+    }
+  }
 }
 
 @layer utilities {
@@ -274,3 +303,12 @@
   padding-top: YOUR_HEADER_INITIAL_HEIGHT; 
 }
 */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
