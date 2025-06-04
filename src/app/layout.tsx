@@ -60,7 +60,7 @@ export default function RootLayout({
                         <ModernSidebar />
                         <main className="bg-[hsl(var(--background))] flex-1 w-0 flex flex-col">
                           <TopBar />
-                          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                          <div className="flex-1 overflow-y-auto">
                             {children}
                           </div>
                         </main>
