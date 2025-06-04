@@ -58,10 +58,10 @@ export default function RootLayout({
                     <SettingsProvider>
                       <div className="flex h-screen overflow-hidden">
                         <ModernSidebar />
-                        <main className="bg-[hsl(var(--background))] overflow-y-auto flex-1 w-0">
+                        <main className="bg-[hsl(var(--background))] flex-1 w-0 flex flex-col">
                           <TopBar />
-                          <div className="p-4 md:p-6 h-full">
-                        {children}
+                          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                            {children}
                           </div>
                         </main>
                       </div>

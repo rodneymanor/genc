@@ -411,7 +411,7 @@ const AiWriterPageContent = () => {
 
   return (
     <>
-      <div className="h-full w-full relative -m-4 md:-m-6">
+      <div className="h-full w-full">
         {/* Main Layout with Resizable Panels */}
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Main Content Panel */}
@@ -422,7 +422,7 @@ const AiWriterPageContent = () => {
           >
             <div className="h-full p-4 md:p-6">
               <MainColumn localVideoIdea={localVideoIdea} setLocalVideoIdea={setLocalVideoIdea} />
-              </div>
+            </div>
           </ResizablePanel>
 
           {/* Resizable Handle */}
@@ -437,7 +437,7 @@ const AiWriterPageContent = () => {
           >
             <div className="h-full overflow-y-auto">
               <SideColumn onVideoIdeaSelect={handleVideoIdeaSelect} />
-              </div>
+            </div>
           </ResizablePanel>
 
           {/* Recording Column - Conditionally Rendered */}
@@ -452,10 +452,10 @@ const AiWriterPageContent = () => {
               >
                 <div className="h-full overflow-y-auto">
                   <AudioRecordingColumn />
-            </div>
+                </div>
               </ResizablePanel>
-          </>
-        )}
+            </>
+          )}
         </ResizablePanelGroup>
       </div>
     </>
