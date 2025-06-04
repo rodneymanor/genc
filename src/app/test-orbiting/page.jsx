@@ -31,7 +31,8 @@ const Icons = {
   )
 };
 
-export function OrbitingCirclesDemoSmall() {
+// Orbiting Circles Demo Component (not exported)
+function OrbitingCirclesDemoSmall() {
   return (
     <div className="relative flex size-10 flex-col items-center justify-center overflow-hidden">
       {/* Center content - simplified for small size - Text removed */}

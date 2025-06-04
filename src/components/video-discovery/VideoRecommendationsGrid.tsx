@@ -3,28 +3,28 @@
 import React, { useEffect, useState } from 'react';
 import VideoCard from './VideoCard';
 import { useAppContext } from '@/contexts/AppContext';
-import { VideoType } from '@/contexts/AppContext';
+import { VideoInfo } from '@/contexts/AppContext';
 import { fetchVideoDetailsFromRapidAPI } from '@/lib/videoApi'; // Import the new API function
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 
 const VideoRecommendationsGrid = () => {
   const { selectedCategory, searchQuery, setSelectedVideo, setCurrentView } = useAppContext();
-  const [videos, setVideos] = useState<VideoType[]>([]);
+  const [videos, setVideos] = useState<VideoInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
 
   // Mock video data (discovery part is still mocked)
-  const MOCK_VIDEO_SOURCES: { pageUrl: string, platform: VideoType['sourcePlatform'] }[] = [
-    { pageUrl: 'https://www.tiktok.com/@ib_danfilm/video/7243545417852407045', platform: 'TikTok' },
-    { pageUrl: 'https://www.instagram.com/reel/Crbc9rsA_KV/', platform: 'Instagram' },
+  const MOCK_VIDEO_SOURCES: { pageUrl: string, platform: VideoInfo['sourceSite'] }[] = [
+    { pageUrl: 'https://www.tiktok.com/@ib_danfilm/video/7243545417852407045', platform: 'tiktok' },
+    { pageUrl: 'https://www.instagram.com/reel/Crbc9rsA_KV/', platform: 'instagram' },
     // Add more mock source URLs
     {
       pageUrl: 'https://www.tiktok.com/@tiktok/video/7003545391991999749', // Example, replace with real discoverable TikTok
-      platform: 'TikTok',
+      platform: 'tiktok',
     },
     {
       pageUrl: 'https://www.instagram.com/reel/C0X1Z2aRpfF/', // Example, replace with real discoverable Instagram
-      platform: 'Instagram',
+      platform: 'instagram',
     },
   ];
 
@@ -37,14 +37,14 @@ const VideoRecommendationsGrid = () => {
       console.log(`Displaying initial set of videos. Category: ${selectedCategory}, Search: ${searchQuery}`);
       
       // Simulate fetching initial data or using a predefined list
-      // For now, we'll use the pageUrls from MOCK_VIDEO_SOURCES to create initial VideoType objects
+      // For now, we'll use the pageUrls from MOCK_VIDEO_SOURCES to create initial VideoInfo objects
       // The actual direct videoUrl and richer details would be fetched on click by fetchVideoDetailsFromRapidAPI
-      const initialDisplayVideos: VideoType[] = MOCK_VIDEO_SOURCES.map((src, index) => ({
+      const initialDisplayVideos: VideoInfo[] = MOCK_VIDEO_SOURCES.map((src, index) => ({
         id: src.pageUrl, // Use pageUrl as ID for the card
         title: `${src.platform} Video ${index + 1} (click to load details)`, // Placeholder title
+        sourceUrl: src.pageUrl, // Store the page URL here, to be used by fetchVideoDetailsFromRapidAPI
         thumbnailUrl: '/placeholder-thumbnail.jpg', // Generic placeholder, API will fetch real one on click
-        sourcePlatform: src.platform,
-        videoUrl: src.pageUrl, // Store the page URL here, to be used by fetchVideoDetailsFromRapidAPI
+        sourceSite: src.platform,
         // Duration and description will be fetched on click
       }));
       
@@ -57,7 +57,7 @@ const VideoRecommendationsGrid = () => {
     loadInitialVideos();
   }, [selectedCategory, searchQuery]); // Re-run if category or search query changes (though current mock doesn't use them for list generation)
 
-  const handleVideoClick = async (videoSource: { pageUrl: string, platform: VideoType['sourcePlatform'] }) => {
+  const handleVideoClick = async (videoSource: { pageUrl: string, platform: VideoInfo['sourceSite'] }) => {
     console.log("Fetching details for:", videoSource.pageUrl);
     // Show some loading state on the card or globally if desired
     const detailedVideo = await fetchVideoDetailsFromRapidAPI(videoSource.pageUrl, videoSource.platform);
@@ -101,7 +101,7 @@ const VideoRecommendationsGrid = () => {
         <VideoCard 
           key={video.id} 
           video={video} 
-          onClick={() => handleVideoClick({ pageUrl: video.videoUrl, platform: video.sourcePlatform })} 
+          onClick={() => handleVideoClick({ pageUrl: video.sourceUrl, platform: video.sourceSite })} 
         />
       ))}
     </div>

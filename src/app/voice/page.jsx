@@ -225,7 +225,7 @@ const VoicePage = () => {
         suggestedPersonaName: "The Enthusiastic Tech Explainer",
         dominantTones: ["Enthusiastic", "Educational"],
         secondaryTones: ["Humorous (during anecdotes)", "Urgent (in CTAs)"],
-        toneExemplars: ["Absolutely crucial!", "Here's the cool part:", "This is mind-blowing!"],
+        toneExemplars: ["Absolutely crucial!", "Here&apos;s the cool part:", "This is mind-blowing!"],
         uniqueIdentifiersOrQuirks: [
           "Always opens with a direct personal question to the viewer",
           "Uses 3-step actionable breakdowns for complex topics"
@@ -236,7 +236,7 @@ const VoicePage = () => {
           {
             type: "Question",
             template: "Often starts with a direct, relatable question about common problems",
-            examples: ["Are you tired of confusing tutorials?", "Ever wonder why your content isn't growing?"]
+            examples: ["Are you tired of confusing tutorials?", "Ever wonder why your content isn&apos;t growing?"]
           },
           {
             type: "Bold Statement", 
@@ -736,7 +736,7 @@ const VoicePage = () => {
                   
                   <h3 className="text-xl font-semibold mb-2">Voice Library Coming Soon</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    We're preparing a collection of professional voices for you to choose from
+                    We&apos;re preparing a collection of professional voices for you to choose from
                   </p>
                 </div>
               </CardContent>
@@ -778,7 +778,7 @@ const VoicePage = () => {
                       </div>
                       <h3 className="text-xl font-semibold mb-3">Clone a Creator</h3>
                       <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
-                        Instantly clone any creator's writing style from their profile.
+                        Instantly clone any creator&apos;s writing style from their profile.
                       </p>
                       <Button variant="link" className="text-purple-600 dark:text-purple-400 p-0 h-auto font-medium">
                         Choose creator →
@@ -831,7 +831,7 @@ const VoicePage = () => {
                     <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
-                        Enter a social media URL or username (we'll extract it for you)
+                        Enter a social media URL or username (we&apos;ll extract it for you)
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
@@ -839,7 +839,7 @@ const VoicePage = () => {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
-                        We'll find the top 5 most popular posts to train your AI voice
+                        We&apos;ll find the top 5 most popular posts to train your AI voice
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 font-bold">•</span>
@@ -855,7 +855,7 @@ const VoicePage = () => {
                   {/* Username Input */}
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Enter creator's username or URL
+                      Enter creator&apos;s username or URL
                     </label>
                     <div className="space-y-6">
                       <div className="space-y-2">
@@ -917,9 +917,9 @@ const VoicePage = () => {
               {modalStep === "processing" && (
                 <div className="space-y-8">
                   <div className="text-center">
-                    <h3 className="text-2xl font-semibold mb-4">Analyzing Your Creator's Voice</h3>
+                    <h3 className="text-2xl font-semibold mb-4">Analyzing Your Creator&apos;s Voice</h3>
                     <p className="text-muted-foreground">
-                      We're analyzing {creatorInput} to create a comprehensive voice profile
+                      We&apos;re analyzing {creatorInput} to create a comprehensive voice profile
                     </p>
                   </div>
 
@@ -967,7 +967,7 @@ const VoicePage = () => {
                   <div className="text-center">
                     <h3 className="text-2xl font-semibold mb-4">Voice Profile Created Successfully!</h3>
                     <p className="text-muted-foreground">
-                      Here's what we discovered about {creatorInput}'s communication style
+                      Here&apos;s what we discovered about {creatorInput}&apos;s communication style
                     </p>
                     {analysisResults.analysisData && (
                       <p className="text-sm text-muted-foreground mt-2">
@@ -1002,7 +1002,7 @@ const VoicePage = () => {
                           <h4 className="font-medium mb-2">Signature Phrases</h4>
                           <div className="space-y-1">
                             {(analysisResults.voiceProfile?.coreIdentity?.toneExemplars || ['Engaging and authentic']).slice(0, 3).map((phrase, index) => (
-                              <p key={index} className="text-sm text-muted-foreground italic">"{phrase}"</p>
+                              <p key={index} className="text-sm text-muted-foreground italic">&quot;{phrase}&quot;</p>
                             ))}
                           </div>
                         </div>

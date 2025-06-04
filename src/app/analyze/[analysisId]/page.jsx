@@ -507,7 +507,7 @@ export default function AnalysisResultPage() {
                               Original Hook
                             </div>
                             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.hook.content}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.hook.content}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -523,7 +523,7 @@ export default function AnalysisResultPage() {
                           <div className="space-y-3">
                             <div className="text-sm font-medium text-blue-600">Suggested Improvement</div>
                             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.hook.suggestion}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.hook.suggestion}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -553,7 +553,7 @@ export default function AnalysisResultPage() {
                               Original Value Content
                             </div>
                             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.goldenNugget.content}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.goldenNugget.content}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -569,7 +569,7 @@ export default function AnalysisResultPage() {
                           <div className="space-y-3">
                             <div className="text-sm font-medium text-blue-600">Suggested Improvement</div>
                             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.goldenNugget.suggestion}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.goldenNugget.suggestion}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -599,7 +599,7 @@ export default function AnalysisResultPage() {
                               Original Call to Action
                             </div>
                             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.callToAction.content}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.callToAction.content}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -615,7 +615,7 @@ export default function AnalysisResultPage() {
                           <div className="space-y-3">
                             <div className="text-sm font-medium text-blue-600">Suggested Improvement</div>
                             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.callToAction.suggestion}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.callToAction.suggestion}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -645,7 +645,7 @@ export default function AnalysisResultPage() {
                               Original Transitions
                             </div>
                             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.bridge.content}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.bridge.content}&quot;</p>
                             </div>
                           </div>
                         )}
@@ -661,7 +661,7 @@ export default function AnalysisResultPage() {
                           <div className="space-y-3">
                             <div className="text-sm font-medium text-blue-600">Suggested Improvement</div>
                             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <p className="text-sm italic">"{analysis.components.bridge.suggestion}"</p>
+                              <p className="text-sm italic">&quot;{analysis.components.bridge.suggestion}&quot;</p>
                             </div>
                           </div>
                         )}
