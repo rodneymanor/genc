@@ -187,7 +187,7 @@ const ModernSidebar = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-64 bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
+    <div className="flex flex-col h-full w-64 bg-white border-r border-sidebar-border text-sidebar-foreground">
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         {/* Left side: User dropdown */}
@@ -283,7 +283,7 @@ const ModernSidebar = () => {
         </div>
 
         {/* Usage Panel */}
-        <div className="rounded-lg border border-sidebar-border bg-sidebar p-4 space-y-4 mt-auto">
+        <div className="rounded-lg border border-sidebar-border bg-gray-50 p-4 space-y-4 mt-auto">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
               Plan Usage
