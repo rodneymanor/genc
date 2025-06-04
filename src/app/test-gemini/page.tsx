@@ -1,10 +1,10 @@
 'use client';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import PerplexitySidebar from "@/components/layout/PerplexitySidebar";
-import MainContent from "@/components/layout/MainContent";
-import { AppProvider } from "@/contexts/AppContext";
 
 export default function TestGeminiPage() {
   const [logs, setLogs] = useState<string[]>([]);
@@ -36,51 +36,46 @@ export default function TestGeminiPage() {
   };
 
   return (
-    <AppProvider>
-      <div className="flex flex-row min-h-screen bg-background">
-        <PerplexitySidebar />
-        <MainContent>
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-4">Test Gemini Source Discovery</h1>
-            
-            <div className="mb-4">
-              <label htmlFor="videoIdeaInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Video Idea:
-              </label>
-              <input 
-                type="text"
-                id="videoIdeaInput"
-                value={videoIdea}
-                onChange={(e) => setVideoIdea(e.target.value)}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
-                placeholder="Enter video idea here"
-              />
-            </div>
+    <div className="min-h-screen bg-background p-8">
+      <div className="container mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Test Gemini Source Discovery</h1>
+        
+        <div className="mb-4">
+          <label htmlFor="videoIdeaInput" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Video Idea:
+          </label>
+          <input 
+            type="text"
+            id="videoIdeaInput"
+            value={videoIdea}
+            onChange={(e) => setVideoIdea(e.target.value)}
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+            placeholder="Enter video idea here"
+          />
+        </div>
 
-            <Button onClick={handleRunTest} disabled={isLoading}>
-              {isLoading ? 'Running Test...' : 'Run Gemini Source Test'}
-            </Button>
+        <Button onClick={handleRunTest} disabled={isLoading}>
+          {isLoading ? 'Running Test...' : 'Run Gemini Source Test'}
+        </Button>
 
-            {error && (
-              <div className="mt-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-md">
-                <p className="font-semibold">Error:</p>
-                <pre className="whitespace-pre-wrap">{error}</pre>
-              </div>
-            )}
-
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold mb-2">Logs:</h2>
-              {logs.length > 0 ? (
-                <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md text-sm overflow-x-auto whitespace-pre-wrap">
-                  {logs.join('\n')}
-                </pre>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No logs yet. Click the button to run the test.</p>
-              )}
-            </div>
+        {error && (
+          <div className="mt-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-md">
+            <p className="font-semibold">Error:</p>
+            <pre className="whitespace-pre-wrap">{error}</pre>
           </div>
-        </MainContent>
+        )}
+
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-2">Logs:</h2>
+          {logs.length > 0 ? (
+            <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md text-sm overflow-x-auto whitespace-pre-wrap">
+              {logs.join('\n')}
+            </pre>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">No logs yet. Click the button to run the test.</p>
+          )}
+        </div>
       </div>
-    </AppProvider>
+    </div>
   );
 } 
