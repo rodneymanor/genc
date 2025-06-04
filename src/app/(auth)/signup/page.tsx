@@ -23,7 +23,7 @@ export default function SignupPage() { // Renamed component for clarity
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!firstName?.trim() || !lastName?.trim() || !email || !password || !confirmPassword) {
       setError("All fields are required.");
       setLoading(false);
       return;
@@ -42,8 +42,8 @@ export default function SignupPage() { // Renamed component for clarity
     }
 
     try {
-      // The signup function from AuthContext now handles Firestore profile creation
-      await signup(email, password, firstName, lastName);
+      // The signup function from AuthContext now requires firstName and lastName
+      await signup(email, password, firstName.trim(), lastName.trim());
       router.push('/'); // Redirect to a dashboard or home page after successful signup
     } catch (err: any) {
       console.error('Signup Page handleSubmit Error:', err);

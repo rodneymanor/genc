@@ -6,11 +6,33 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { capitalizeUserName } from '@/lib/utils';
 
 const WelcomeMessage = () => {
-  const { userProfile, loading: authLoading } = useContext(AuthContext);
+  const { userProfile, loading: authLoading, profileLoading } = useContext(AuthContext);
 
-  // Show loading state while auth is resolving
-  if (authLoading) {
-    return null;
+  const getUserDisplayName = () => {
+    if (userProfile?.fullName) {
+      // Extract first name from full name
+      const firstName = userProfile.fullName.trim().split(' ')[0];
+      return capitalizeUserName(firstName);
+    }
+    if (userProfile?.displayName) {
+      // Extract first name from display name if it contains spaces
+      const firstName = userProfile.displayName.trim().split(' ')[0];
+      return capitalizeUserName(firstName);
+    }
+    if (userProfile?.email) {
+      return capitalizeUserName(userProfile.email.split('@')[0]);
+    }
+    return 'User';
+  };
+
+  // Show loading skeleton while auth is resolving or profile is loading
+  if (authLoading || (!userProfile && profileLoading)) {
+    return (
+      <div className="text-center animate-pulse">
+        <div className="h-12 md:h-16 bg-muted/30 rounded-lg w-96 max-w-full mx-auto mb-2"></div>
+        <div className="h-6 bg-muted/20 rounded w-48 mx-auto"></div>
+      </div>
+    );
   }
 
   // If no user is logged in, show login prompt
@@ -29,16 +51,6 @@ const WelcomeMessage = () => {
       </div>
     );
   }
-
-  const getUserDisplayName = () => {
-    if (userProfile?.displayName) {
-      return capitalizeUserName(userProfile.displayName);
-    }
-    if (userProfile?.email) {
-      return capitalizeUserName(userProfile.email.split('@')[0]);
-    }
-    return 'User';
-  };
 
   return (
     <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">

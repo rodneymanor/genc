@@ -87,7 +87,7 @@ async function downloadVideoData(videoUrl: string): Promise<Buffer> {
     const response = await axios.get(videoUrl, {
       responseType: 'arraybuffer',
       timeout: 30000, // 30 seconds timeout
-      headers: {
+        headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
       }
     });

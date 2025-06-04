@@ -128,3 +128,49 @@ export function capitalizeFirst(str: string | null | undefined): string {
   
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
+
+/**
+ * Shows success feedback with consistent styling and timing
+ * @param toast - The toast function from useToast hook
+ * @param title - Success message title
+ * @param description - Success message description
+ * @param setJustSaved - Optional state setter for button success state
+ */
+export function showSuccessFeedback(
+  toast: (props: any) => void,
+  title: string,
+  description: string,
+  setJustSaved?: (value: boolean) => void
+) {
+  // Show success toast
+  toast({
+    title,
+    description,
+    duration: 3000,
+  });
+
+  // Show button success state if provided
+  if (setJustSaved) {
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
+  }
+}
+
+/**
+ * Shows error feedback with consistent styling
+ * @param toast - The toast function from useToast hook
+ * @param title - Error message title
+ * @param description - Error message description
+ */
+export function showErrorFeedback(
+  toast: (props: any) => void,
+  title: string,
+  description: string
+) {
+  toast({
+    title,
+    description,
+    variant: "destructive",
+    duration: 4000, // Slightly longer for errors
+  });
+}

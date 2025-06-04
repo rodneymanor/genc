@@ -21,6 +21,11 @@ export interface UserProfile {
   // Stripe customer ID, if using Stripe for subscriptions
   stripeCustomerId?: string; 
   lastLogin?: Timestamp;
+  
+  // Topics and Overview for content generation
+  overview?: string; // Brief description/elevator pitch
+  topics?: string | string[]; // Array of topics they speak about (legacy) or plain English description (new)
+  fullName?: string; // User's full name for profile display and requirements
 }
 
 // 2. AI Writer Execution (Represents a full AI Writer session for a video idea)

@@ -68,7 +68,7 @@ const LibraryPage = () => {
         .then(data => {
           if (data.analyses) {
             setAnalyses(data.analyses);
-          }
+    }
         })
         .catch((err) => {
           console.error("Error fetching analyses:", err);
@@ -129,12 +129,12 @@ const LibraryPage = () => {
               Analyze Video
             </Button>
           </Link>
-          <Link href="/" passHref>
+        <Link href="/" passHref>
             <Button>
               <FileText className="h-4 w-4 mr-2" />
               Create Script
             </Button>
-          </Link>
+        </Link>
         </div>
       </div>
 
@@ -169,49 +169,49 @@ const LibraryPage = () => {
               <p className="ml-4">Loading your scripts...</p>
             </div>
           ) : scripts.length === 0 ? (
-            <div className="text-center py-10">
+        <div className="text-center py-10">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">No Scripts Yet</h2>
-              <p className="text-muted-foreground mb-6">
+          <h2 className="text-2xl font-semibold mb-2">No Scripts Yet</h2>
+          <p className="text-muted-foreground mb-6">
                 It looks like you haven&apos;t created any scripts. Get started by creating one!
-              </p>
+          </p>
               <Link href="/" passHref>
                 <Button>
                   <FileText className="h-4 w-4 mr-2" />
                   Create Your First Script
                 </Button>
               </Link>
-            </div>
+        </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {scripts.map((script) => (
-                <Card key={script.id} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="truncate">{script.title || 'Untitled Script'}</CardTitle>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {scripts.map((script) => (
+            <Card key={script.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="truncate">{script.title || 'Untitled Script'}</CardTitle>
                     <CardDescription className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {formatDate(script.updatedAt)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {script.finalScriptText || script.videoIdea || 'No content yet.'}
-                    </p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant="outline"
-                      className="w-full"
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {script.finalScriptText || script.videoIdea || 'No content yet.'}
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="outline"
+                  className="w-full"
                       onClick={() => router.push(`/ai-writer/${script.id}?loadScript=true`)}
-                    >
+                >
                       <Play className="h-4 w-4 mr-2" />
-                      Open Script
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+                  Open Script
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
         </TabsContent>
 
         {/* Analyses Tab */}

@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 
 const config = {
     darkMode: ["class"],
-    // darkMode: ["class"],
+  // darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -55,20 +55,20 @@ const config = {
   		}
   	},
   	extend: {
-  		fontFamily: {
+      fontFamily: {
   			sans: [
   				'var(--font-inter)'
   			],
   			'inter': [
   				'var(--font-inter)'
   			]
-  		},
-  		width: {
+      },
+      width: {
   			'input-lg': '640px'
-  		},
-  		height: {
+      },
+      height: {
   			'input-lg': '120px'
-  		},
+      },
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

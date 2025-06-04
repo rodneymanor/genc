@@ -16,6 +16,10 @@ const sidebarNavItems = [
     href: "/settings", // Or /settings/profile if you prefer explicit profile path
   },
   {
+    title: "Topics",
+    href: "/settings/topics",
+  },
+  {
     title: "Account",
     href: "/settings/account",
   },

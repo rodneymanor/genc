@@ -4,6 +4,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AuthContext } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { capitalizeUserName } from '@/lib/utils';
 import { getUserScripts } from '@/lib/firestoreService';
 import { Timestamp } from 'firebase/firestore';
@@ -118,7 +119,8 @@ const usageMetrics: UsageMetric[] = [
 const ModernSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, logout } = useContext(AuthContext) || {};
+  const { userProfile, logout, loading, profileLoading } = useContext(AuthContext) || {};
+  const { openSettings } = useSettings();
   const [recentScripts, setRecentScripts] = useState<any[]>([]);
   const [isLoadingScripts, setIsLoadingScripts] = useState(true);
 
@@ -156,31 +158,42 @@ const ModernSidebar = () => {
     }
   };
 
-  const getUserDisplayName = (): string => {
-    if (userProfile?.displayName) {
-      return capitalizeUserName(userProfile.displayName);
+  const getUserDisplayName = () => {
+    if (!userProfile) return 'Guest';
+    return userProfile.fullName || userProfile.displayName || userProfile.email || 'User';
+  };
+
+  const renderUserButton = () => {
+    // Show loading skeleton while user data is loading
+    if (loading || (!userProfile && profileLoading)) {
+      return (
+        <div className="flex items-center gap-2 px-2 py-1 rounded-md">
+          <div className="w-16 h-4 bg-sidebar-accent/30 rounded animate-pulse"></div>
+          <div className="w-3 h-3 bg-sidebar-accent/30 rounded animate-pulse"></div>
+        </div>
+      );
     }
-    if (userProfile?.email) {
-      return capitalizeUserName(userProfile.email.split('@')[0]);
-    }
-    return 'User';
+
+    return (
+      <Button 
+        variant="ghost" 
+        size="sm"
+        className="flex items-center gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      >
+        <span className="truncate font-semibold text-sm">{getUserDisplayName()}</span>
+        <ChevronDown className="h-3 w-3" />
+      </Button>
+    );
   };
 
   return (
     <div className="flex flex-col h-full w-64 bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+      <div className="flex items-center justify-between p-4">
         {/* Left side: User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="flex items-center gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <span className="truncate font-semibold text-sm">{getUserDisplayName()}</span>
-              <ChevronDown className="h-3 w-3" />
-            </Button>
+            {renderUserButton()}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 rounded-lg"
@@ -192,16 +205,17 @@ const ModernSidebar = () => {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {userProfile?.email || 'user@example.com'}
+                  {userProfile?.email || 'Loading...'}
                 </p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="w-full cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
+            <DropdownMenuItem onClick={() => openSettings('topics')} className="cursor-pointer">
+              <FileText className="mr-2 h-4 w-4" />
+              Topics
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openSettings('profile')} className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
@@ -212,7 +226,7 @@ const ModernSidebar = () => {
         </DropdownMenu>
 
         {/* Right side: Plus button */}
-        <Button variant="ghost" size="sm" asChild className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+        <Button variant="ghost" size="sm" asChild className="bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
           <Link href="/">
             <Plus className="h-4 w-4" />
           </Link>
@@ -220,63 +234,56 @@ const ModernSidebar = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex flex-col gap-2.5 min-h-0 h-full px-2">
         {/* Main Navigation */}
-        <div>
-          <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-3">
-            Navigation
-          </h3>
-          <nav className="space-y-1">
-            {mainNavItems.map((item) => {
-              const isActive = item.isActive(currentPath);
-              return (
-                <Link key={item.label} href={item.href}>
-                  <div className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}>
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
+        <div className="flex flex-col gap-0.5">
+          {mainNavItems.map((item) => {
+            const isActive = item.isActive(currentPath);
+            return (
+              <Link key={item.label} href={item.href}>
+                <div className={cn(
+                  "flex items-center gap-2 px-2 py-1 rounded-md text-sm font-medium transition-colors h-7 justify-start",
+                  isActive 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}>
+                  <item.icon className="h-4 w-4 flex-shrink-0" />
+                  {item.label}
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Recent Scripts */}
-        <div>
-          <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-3">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider mb-1 px-2">
             Recent Scripts
           </h3>
-          <div className="space-y-1">
-            {isLoadingScripts ? (
-              <div className="flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/60">
-                <FileText className="h-4 w-4" />
-                <span>Loading scripts...</span>
-              </div>
-            ) : recentScripts.length > 0 ? (
-              recentScripts.map((script) => (
-                <Link key={script.id} href={`/ai-writer/${script.id}`}>
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                    <FileText className="h-4 w-4" />
-                    <span className="truncate">{script.title || 'Untitled Script'}</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/60">
-                <FilePen className="h-4 w-4" />
-                <span>No recent scripts</span>
-              </div>
-            )}
-          </div>
+          {isLoadingScripts ? (
+            <div className="flex items-center gap-2 px-2 py-1 text-sm text-sidebar-foreground/60 h-7">
+              <FileText className="h-4 w-4 flex-shrink-0" />
+              <span>Loading scripts...</span>
+            </div>
+          ) : recentScripts.length > 0 ? (
+            recentScripts.map((script) => (
+              <Link key={script.id} href={`/ai-writer/${script.id}`}>
+                <div className="flex items-center gap-2 px-2 py-1 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors h-7 justify-start">
+                  <FileText className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{script.title || 'Untitled Script'}</span>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="flex items-center gap-2 px-2 py-1 text-sm text-sidebar-foreground/60 h-7">
+              <FilePen className="h-4 w-4 flex-shrink-0" />
+              <span>No recent scripts</span>
+            </div>
+          )}
         </div>
 
         {/* Usage Panel */}
-        <div className="rounded-lg border border-sidebar-border bg-sidebar p-4 space-y-4">
+        <div className="rounded-lg border border-sidebar-border bg-sidebar p-4 space-y-4 mt-auto">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider">
               Plan Usage
@@ -307,22 +314,22 @@ const ModernSidebar = () => {
             Get unlimited
           </Button>
         </div>
-      </div>
 
-      {/* Footer - Bottom Navigation */}
-      <div className="p-4 border-t border-sidebar-border space-y-1">
-        {bottomNavItems.map((item) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            size="sm"
-            onClick={item.onClick}
-            className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Button>
-        ))}
+        {/* Footer - Bottom Navigation */}
+        <div className="p-2 space-y-1">
+          {bottomNavItems.map((item) => (
+            <Button
+              key={item.label}
+              variant="ghost"
+              size="sm"
+              onClick={item.onClick}
+              className="w-full justify-start gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-7 px-2 py-1 text-sm font-medium"
+            >
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              {item.label}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );

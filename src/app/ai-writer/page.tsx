@@ -1,447 +1,627 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React, { useContext, useState, useEffect } from "react";
-import { IconFileSearch, IconListDetails, IconFileText } from "@tabler/icons-react";
+import React, { useState, useRef, useEffect } from "react";
+import { useChat } from "ai/react";
 import { Button } from "@/components/ui/button";
-import { Copy, Edit } from "lucide-react";
-import { Suspense } from "react";
-import { ClientTweetCard } from "@/components/magicui/client-tweet-card";
-import { TweetSkeleton } from "@/components/magicui/tweet-card";
-import { useAiWriterContext } from "@/contexts/AiWriterContext";
-import type { Source } from "@/contexts/AiWriterContext";
-import ThinkingTimeline from "@/components/interactive/ThinkingTimeline";
-import type { ScriptHook, ScriptFactset, ScriptTake, ScriptOutro } from "@/lib/types/scriptComponents";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Send, MessageSquare, Sparkles, Target, Lightbulb, Zap, ChevronRight, X, Search, FileText, Brain, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { VoiceIndicator } from "@/components/ui/voice-indicator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useAiWriterContext } from "@/contexts/AiWriterContext";
+import type { Message } from "ai/react";
+import { useTopBar } from "@/components/layout/TopBarProvider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Component definitions should come before they are used in AiWriterPageContent or AiWriterTabs
+// Script component types
+type ComponentType = "hook" | "bridge" | "goldenNugget" | "wta";
 
-// New TruncatedTitleHeader component
-interface TruncatedTitleHeaderProps {
+interface ScriptComponent {
+  id: string;
+  type: ComponentType;
   title: string;
+  content: string;
+  emoji: string;
+  selected?: boolean;
 }
 
-const TruncatedTitleHeader: React.FC<TruncatedTitleHeaderProps> = ({ title }) => {
-  const [showCopyFeedback, setShowCopyFeedback] = useState(false);
+interface ScriptOutline {
+  hook?: ScriptComponent;
+  bridge?: ScriptComponent;
+  goldenNugget?: ScriptComponent;
+  wta?: ScriptComponent;
+}
 
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(title).then(() => {
-      setShowCopyFeedback(true);
-      setTimeout(() => setShowCopyFeedback(false), 2000);
-    }).catch(err => {
-      console.error("Failed to copy title: ", err);
-      alert("Failed to copy title.");
-    });
-  };
+// Component styling configurations
+const componentConfig = {
+  hook: {
+    emoji: "🎣",
+    label: "Hook",
+    color: "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800",
+    selectedColor: "ring-2 ring-blue-500 bg-blue-100 dark:bg-blue-900/30",
+    description: "Attention-grabbing opening"
+  },
+  bridge: {
+    emoji: "🌉",
+    label: "Bridge",
+    color: "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800",
+    selectedColor: "ring-2 ring-green-500 bg-green-100 dark:bg-green-900/30",
+    description: "Connecting story or transition"
+  },
+  goldenNugget: {
+    emoji: "✨",
+    label: "Golden Nugget",
+    color: "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800",
+    selectedColor: "ring-2 ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/30",
+    description: "Key insight or valuable tip"
+  },
+  wta: {
+    emoji: "⚡",
+    label: "What to Action",
+    color: "bg-purple-50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800",
+    selectedColor: "ring-2 ring-purple-500 bg-purple-100 dark:bg-purple-900/30",
+    description: "Call to action or next steps"
+  }
+};
+
+// Component Card for displaying script components in messages
+const ComponentCard: React.FC<{
+  component: ScriptComponent;
+  onSelect: (component: ScriptComponent) => void;
+  isSelected?: boolean;
+}> = ({ component, onSelect, isSelected }) => {
+  const config = componentConfig[component.type];
 
   return (
-    <div id="ai-writer-header" className="max-w-4xl mx-auto relative isolate z-20 sticky-header">
-      <div className="relative z-10 header-content-wrapper">
-        <div className="pt-3 group relative flex items-end gap-2 title-and-actions-container">
-          <div className="min-w-0 flex-1 title-container h-28">
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h1 className="font-display text-pretty text-lg lg:text-2xl font-semibold dark:font-medium text-textMain dark:text-textMainDark selection:bg-super/50 selection:text-textMain dark:selection:bg-superDuper/10 dark:selection:text-superDark break-words text-left overflow-hidden line-clamp-3">
-                    {title}
-                  </h1>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" align="start" className="max-w-md">
-                  <p className="text-sm">{title}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+    <Card 
+      className={cn(
+        "cursor-pointer transition-all duration-200 hover:shadow-md",
+        config.color,
+        isSelected && config.selectedColor
+      )}
+      onClick={() => onSelect(component)}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{config.emoji}</span>
+            <Badge variant="secondary" className="text-xs">
+              {config.label}
+            </Badge>
           </div>
-          <div className="flex shrink-0 self-end actions-container mb-1">
-            <div className="relative flex shrink-0 flex-row rounded-lg border border-border/50 bg-background shadow-sm p-[1.5px] opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              <Button
-                aria-label="Edit Title"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 hover:bg-muted/50 text-muted-foreground"
-                onClick={() => alert("Edit functionality not implemented yet.")}
-              >
-                <Edit size={14} />
-              </Button>
-              <div className="m-[1.5px] w-px border-r border-borderMain/50 bg-transparent"></div>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip open={showCopyFeedback}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      aria-label="Copy Title"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 hover:bg-muted/50 text-muted-foreground"
-                      onClick={handleCopyToClipboard}
-                    >
-                      <Copy size={14} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-green-600 text-white">
-                    <p>Copied!</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          {isSelected && <CheckCircle className="w-4 h-4 text-green-600" />}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <h4 className="font-medium text-sm mb-1">{component.title}</h4>
+        <p className="text-xs text-muted-foreground line-clamp-2">{component.content}</p>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Options Panel for component variations
+const OptionsPanel: React.FC<{
+  selectedComponent: ScriptComponent | null;
+  variations: ScriptComponent[];
+  onSelectVariation: (component: ScriptComponent) => void;
+  onKeepOriginal: () => void;
+  onClose: () => void;
+  isVisible: boolean;
+}> = ({ selectedComponent, variations, onSelectVariation, onKeepOriginal, onClose, isVisible }) => {
+  if (!isVisible) return null;
+
+  if (!selectedComponent) {
+      return (
+      <div className="h-full p-6 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Target className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2">Select a Component</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Click on any script component in the chat to see variations and alternatives here.
+        </p>
+        </div>
+      );
+    }
+
+  const config = componentConfig[selectedComponent.type];
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b bg-card">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{config.emoji}</span>
+            <h3 className="font-semibold">{config.label} Options</h3>
+                  </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+                </div>
+        <p className="text-xs text-muted-foreground">{config.description}</p>
+                </div>
+
+      {/* Content */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {/* Current Selection */}
+          <div>
+            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Current Selection:</h4>
+            <Card className={cn("border-2", config.selectedColor)}>
+              <CardContent className="p-3">
+                <h5 className="font-medium text-sm mb-1">{selectedComponent.title}</h5>
+                <p className="text-xs text-muted-foreground">{selectedComponent.content}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 w-full" 
+                  onClick={onKeepOriginal}
+                >
+                  Keep This Option
+                </Button>
+              </CardContent>
+            </Card>
+                </div>
+
+          {/* Variations */}
+          {variations.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 text-muted-foreground">Try These Alternatives:</h4>
+              <div className="space-y-3">
+                {variations.map((variation, index) => (
+                  <Card key={variation.id} className="hover:shadow-sm transition-shadow">
+                    <CardContent className="p-3">
+                      <h5 className="font-medium text-sm mb-1">{variation.title}</h5>
+                      <p className="text-xs text-muted-foreground mb-2">{variation.content}</p>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={() => onSelectVariation(variation)}
+                      >
+                        Use This Option
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+        </div>
+    );
+  };
+
+// Main Chat Interface
+const ChatInterface: React.FC<{
+  onComponentSelect: (component: ScriptComponent) => void;
+  selectedComponent: ScriptComponent | null;
+  scriptOutline: ScriptOutline;
+}> = ({ onComponentSelect, selectedComponent, scriptOutline }) => {
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
+    api: "/api/ai-writer-chat",
+  });
+
+  const { 
+    videoIdea, 
+    isProcessing, 
+    currentStep, 
+    scriptComponents,
+    sources,
+    researchAnalysis 
+  } = useAiWriterContext();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Auto-start conversation when script components are ready
+  useEffect(() => {
+    if (videoIdea && scriptComponents && !hasInitialized && messages.length === 0) {
+      setHasInitialized(true);
+      append({
+        role: "user",
+        content: `Help me create a video script about: "${videoIdea}"`
+      });
+    }
+  }, [videoIdea, scriptComponents, hasInitialized, messages.length, append]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Parse AI messages to extract script components
+  const parseComponents = (content: string): ScriptComponent[] => {
+    const components: ScriptComponent[] = [];
+    const componentRegex = /\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\]\s*(.*?)\s*\|\|\s*(.*?)(?=\[|$)/gs;
+    
+    let match;
+    while ((match = componentRegex.exec(content)) !== null) {
+      const [, type, title, contentText] = match;
+      const componentType = type.toLowerCase().replace('goldennugget', 'goldenNugget') as ComponentType;
+      
+      components.push({
+        id: `${componentType}-${Date.now()}-${Math.random()}`,
+        type: componentType,
+        title: title.trim(),
+        content: contentText.trim(),
+        emoji: componentConfig[componentType].emoji,
+      });
+    }
+    
+    return components;
+  };
+
+  const getEmptyStateContent = () => {
+    if (isProcessing) {
+      return {
+        icon: Brain,
+        title: "Preparing Your Script Assistant",
+        description: "I'm gathering information and setting up everything needed to help you create an amazing script. This will just take a moment..."
+      };
+    }
+    
+    if (scriptComponents) {
+      return {
+        icon: Sparkles,
+        title: "Ready to Create Your Script",
+        description: "I have your research ready! Tell me about your video idea and I'll help you create an engaging script with Hook, Bridge, Golden Nugget, and What to Action components."
+      };
+    }
+
+    return {
+      icon: MessageSquare,
+      title: "AI Script Writer",
+      description: "Tell me about your video idea and I'll help you create an engaging script with Hook, Bridge, Golden Nugget, and What to Action components."
+    };
+  };
+
+  const emptyState = getEmptyStateContent();
+  const EmptyIcon = emptyState.icon;
+
+  // Get current AI status for persistent indicator
+  const getCurrentAIStatus = () => {
+    if (isLoading) {
+      return { text: "AI is thinking...", icon: Brain, animate: true };
+    }
+    
+    if (isProcessing) {
+      switch (currentStep) {
+        case "search":
+          return { text: "Searching for sources...", icon: Search, animate: true };
+        case "extract":
+          return { text: "Extracting content...", icon: FileText, animate: true };
+        case "analyze":
+          return { text: "Analyzing research...", icon: Brain, animate: true };
+        default:
+          return { text: "Processing...", icon: Loader2, animate: true };
+      }
+    }
+
+    if (scriptComponents && researchAnalysis) {
+      return { text: "Ready to help with your script", icon: Sparkles, animate: false };
+    }
+
+    return null;
+  };
+
+  const aiStatus = getCurrentAIStatus();
+
+  return (
+    <div className="h-full flex flex-col bg-background relative">
+      {/* Scrollable Messages Area */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-4 pb-20"> {/* Extra bottom padding to account for sticky input */}
+            <div className="space-y-4 max-w-2xl mx-auto">
+              {messages.length === 0 && (
+                <div className="text-center py-8">
+                  <div className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+                    isProcessing ? "bg-primary/10" : "bg-primary/10"
+                  )}>
+                    <EmptyIcon className={cn(
+                      "w-8 h-8",
+                      isProcessing ? "text-primary animate-pulse" : "text-primary"
+                    )} />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{emptyState.title}</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {emptyState.description}
+                  </p>
+                </div>
+              )}
+
+              {messages.map((message: Message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex w-full",
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-lg px-4 py-2",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    )}
+                  >
+                    {message.role === "assistant" ? (
+                      <div className="space-y-3">
+                        <div className="prose prose-sm max-w-none">
+                          {/* Render the text content, excluding component markers */}
+                          <p className="text-sm leading-relaxed">
+                            {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
+                          </p>
+                        </div>
+                        
+                        {/* Render extracted components */}
+                        {parseComponents(message.content).length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                            {parseComponents(message.content).map((component) => (
+                              <ComponentCard
+                                key={component.id}
+                                component={component}
+                                onSelect={onComponentSelect}
+                                isSelected={selectedComponent?.id === component.id}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm">{message.content}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {/* AI Thinking Indicator in Chat */}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                    <div className="flex items-center gap-2">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">AI is thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
             </div>
           </div>
+        </ScrollArea>
+      </div>
+
+      {/* Persistent AI Status Bar (above input) */}
+      {aiStatus && (
+        <div className="border-t bg-muted/50 px-4 py-2">
+          <div className="max-w-2xl mx-auto flex items-center gap-2">
+            <aiStatus.icon className={cn(
+              "w-4 h-4 text-muted-foreground",
+              aiStatus.animate && "animate-spin"
+            )} />
+            <span className="text-xs text-muted-foreground">{aiStatus.text}</span>
+            {sources.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-auto">
+                {sources.length} sources ready
+              </Badge>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Sticky Input at Bottom */}
+      <div className="border-t bg-background p-4">
+        <form onSubmit={handleSubmit} className="flex gap-2 max-w-2xl mx-auto">
+          <Input
+            value={input}
+            onChange={handleInputChange}
+            placeholder={
+              isProcessing 
+                ? "Please wait while I prepare your research..." 
+                : isLoading
+                ? "AI is responding..."
+                : "Ask for script help or request changes..."
+            }
+            disabled={isLoading || isProcessing}
+            className="flex-1"
+          />
+          <Button type="submit" disabled={isLoading || !input.trim() || isProcessing}>
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
+        </form>
       </div>
     </div>
   );
 };
 
-// tabsData and AiWriterTabs component structure
-const tabsData = [
-  { name: "Research", value: "research", icon: IconFileSearch },
-  { name: "Outline", value: "outline", icon: IconListDetails },
-  { name: "Script", value: "script", icon: IconFileText },
-];
-
-const AiWriterTabs = () => {
-  const contextValues = useAiWriterContext();
-  console.log("[AiWriterTabs] Rendering. Context state - isProcessing:", contextValues.isProcessing, "currentStep:", contextValues.currentStep, "processingError:", contextValues.processingError);
-
-  const {
-    sources,
-    isProcessing: isResearchProcessing, // Alias for clarity in this component
-    currentStep: researchCurrentStep,    // Alias for clarity
-    errorStep: researchErrorStep,        // Alias for clarity
-    processingError: researchProcessingError,
-    videoIdea,
-    scriptComponents,
+// Processing Status Component
+const ProcessingStatus: React.FC = () => {
+  const { 
+    isProcessing, 
+    currentStep, 
+    processingError, 
+    isExtractingContent,
+    isLoadingResearchAnalysis,
     isLoadingScriptComponents,
-    scriptComponentsError,
-    userSelectedComponents,
-    analyzeAndGenerateOutlines,
-    updateSelectedHook,
-    updateSelectedBridge,
-    updateSelectedGoldenNugget,
-    updateSelectedWTA,
-    finalScript,
-    isLoadingFinalScript,
-    finalScriptError,
-    generateFinalScript
-  } = contextValues; // Use the already fetched contextValues
+    sources,
+    researchAnalysis,
+    scriptComponents,
+    videoIdea
+  } = useAiWriterContext();
 
-  const handleGenerateOutline = () => {
-    if (sources && sources.length > 0 && videoIdea) {
-      analyzeAndGenerateOutlines();
-    } else {
-      console.warn("Cannot generate outline: Video idea or sources are missing.");
-      alert("Please ensure a video idea has been searched and sources are available in the 'Research' tab before generating an outline.");
-    }
-  };
+  // Show status if there's any processing OR if we just arrived with a video idea but no components yet
+  const shouldShowStatus = isProcessing || processingError || (videoIdea && !scriptComponents);
 
-  const handleGenerateFinalScript = () => {
-    if (userSelectedComponents && 
-        userSelectedComponents.hook && 
-        userSelectedComponents.bridge && 
-        userSelectedComponents.goldenNugget && 
-        userSelectedComponents.wta) {
-      generateFinalScript();
-    } else {
-      alert("Please select a hook, bridge, golden nugget, and WTA from the Outline tab first.");
-    }
-  };
+  if (!shouldShowStatus) return null;
 
-  const copyScriptToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Script copied to clipboard!");
-    }).catch(err => {
-      console.error("Failed to copy script: ", err);
-      alert("Failed to copy script.");
-    });
-  };
-
-  const renderOutlineContent = () => {
-    if (isLoadingScriptComponents) {
-      return <p className="text-center p-4">Generating script outline ideas...</p>;
-    }
-    if (scriptComponentsError) {
-      return (
-        <div className="text-red-500 p-4 border border-red-500 rounded-md">
-          <h3 className="font-semibold">Error generating outline:</h3>
-          <p>{scriptComponentsError}</p>
-          <Button onClick={handleGenerateOutline} className="mt-4">Retry Generating Outline</Button>
-        </div>
-      );
-    }
-    if (!scriptComponents) {
-      return (
-        <div className="text-center p-4">
-          <p className="mb-4 text-muted-foreground">
-            Once research sources are available, you can generate script outline components here.
-          </p>
-          {(sources && sources.length > 0 && videoIdea) ? (
-            <Button onClick={handleGenerateOutline} disabled={isLoadingScriptComponents}>
-              {isLoadingScriptComponents ? "Generating..." : "Generate Script Outline"}
-            </Button>
-          ) : (
-            <p className="text-sm text-orange-500">Please ensure a video idea has been searched and sources are available in the &apos;Research&apos; tab.</p>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-8">
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your Hook:</h4>
-          {scriptComponents.hooks && scriptComponents.hooks.length > 0 ? (
-            <RadioGroup 
-              value={userSelectedComponents?.hook?.title || ""} 
-              onValueChange={(title: string) => {
-                  const selected = scriptComponents.hooks.find(h => h.title === title);
-                  updateSelectedHook(selected || null);
-              }}
-            >
-              {scriptComponents.hooks.map((hook, index) => (
-                <div key={`hook-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={hook.title} id={`hook-${hook.title}-${index}`} />
-                    <Label htmlFor={`hook-${hook.title}-${index}`} className="font-medium text-md cursor-pointer">
-                      {hook.title}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{hook.lines.join(" ")}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Hook options generated.</p>}
-        </section>
-
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Select Your Bridge:</h4>
-          {scriptComponents.bridges && scriptComponents.bridges.length > 0 ? (
-            <RadioGroup
-              value={userSelectedComponents?.bridge?.title || ""}
-              onValueChange={(title: string) => {
-                const selected = scriptComponents.bridges.find(b => b.title === title);
-                updateSelectedBridge(selected || null);
-              }}
-            >
-              {scriptComponents.bridges.map((bridge, index) => (
-                <div key={`bridge-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={bridge.title} id={`bridge-${index}`} />
-                    <Label htmlFor={`bridge-${index}`} className="font-medium text-md cursor-pointer">
-                      {bridge.title}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{bridge.content}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Bridge options generated.</p>}
-        </section>
-
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Select Your Golden Nugget:</h4>
-          {scriptComponents.goldenNuggets && scriptComponents.goldenNuggets.length > 0 ? (
-            <RadioGroup
-              value={userSelectedComponents?.goldenNugget?.title || ""}
-              onValueChange={(title: string) => {
-                const selected = scriptComponents.goldenNuggets.find(gn => gn.title === title);
-                updateSelectedGoldenNugget(selected || null);
-              }}
-            >
-              {scriptComponents.goldenNuggets.map((goldenNugget, index) => (
-                <div key={`goldennugget-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={goldenNugget.title} id={`goldennugget-${index}`} />
-                    <Label htmlFor={`goldennugget-${index}`} className="font-medium text-md cursor-pointer">
-                      {goldenNugget.title}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{goldenNugget.content}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No Golden Nugget options generated.</p>}
-        </section>
-
-        <section>
-          <h4 className="text-xl font-semibold mb-3 border-b pb-2">Pick Your WTA (Why to Act):</h4>
-          {scriptComponents.wtas && scriptComponents.wtas.length > 0 ? (
-            <RadioGroup 
-              value={userSelectedComponents?.wta?.title || ""} 
-              onValueChange={(title: string) => {
-                  const selected = scriptComponents.wtas.find(w => w.title === title);
-                  updateSelectedWTA(selected || null);
-              }}
-            >
-              {scriptComponents.wtas.map((wta, index) => (
-                <div key={`wta-${index}`} className="mb-3 p-3 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={wta.title} id={`wta-${wta.title}-${index}`} />
-                    <Label htmlFor={`wta-${wta.title}-${index}`} className="font-medium text-md cursor-pointer">
-                      {wta.title}
-                    </Label>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1 pl-6">{wta.lines.join(" ")}</p>
-                </div>
-              ))}
-            </RadioGroup>
-          ) : <p className="text-sm text-muted-foreground">No WTA options generated.</p>}
-        </section>
-      </div>
-    );
-  };
-
-  const renderScriptContent = () => {
-    const canGenerateScript = userSelectedComponents && 
-                              userSelectedComponents.hook && 
-                              userSelectedComponents.bridge && 
-                              userSelectedComponents.goldenNugget && 
-                              userSelectedComponents.wta;
-
-    if (isLoadingFinalScript) {
-      return <p className="text-center p-4">Generating your final script...</p>;
-    }
-    if (finalScriptError) {
-      return (
-        <div className="text-red-500 p-4 border border-red-500 rounded-md">
-          <h3 className="font-semibold">Error generating final script:</h3>
-          <p>{finalScriptError}</p>
-          {canGenerateScript && 
-            <Button onClick={handleGenerateFinalScript} className="mt-4">Retry Generating Script</Button>
-          }
-        </div>
-      );
-    }
-    if (finalScript) {
-      return (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Your Generated Script:</h3>
-            <Button onClick={() => copyScriptToClipboard(finalScript)} variant="outline">
-              <Copy className="mr-2 h-4 w-4" /> Copy Script
-            </Button>
-          </div>
-          <pre className="bg-muted p-4 rounded-md whitespace-pre-wrap font-sans text-sm leading-relaxed">{finalScript}</pre>
-        </div>
-      );
-    }
-    return (
-      <div className="text-center p-4">
-        <p className="mb-4 text-muted-foreground">
-          Once you have selected your script components from the &quot;Outline&quot; tab, you can generate the final script here.
-        </p>
-        <Button onClick={handleGenerateFinalScript} disabled={!canGenerateScript || isLoadingFinalScript}>
-          {isLoadingFinalScript ? "Generating..." : "Generate Final Script"}
-        </Button>
-        {!canGenerateScript && 
-            <p className="text-xs text-orange-500 mt-2">Please select a hook, bridge, golden nugget, and WTA from the &quot;Outline&quot; tab first.</p>
+  const getStepInfo = (step: string | null) => {
+    switch (step) {
+      case "init":
+        return { icon: Loader2, text: "Initializing...", description: "Setting up your script generation" };
+      case "search":
+        return { icon: Search, text: "Searching for sources...", description: "Finding relevant content for your video idea" };
+      case "extract":
+        return { icon: FileText, text: "Extracting content...", description: `Reading ${sources.length} source${sources.length !== 1 ? 's' : ''} and processing materials` };
+      case "analyze":
+        return { icon: Brain, text: "Analyzing research...", description: "Creating insights from your sources" };
+      case "components":
+        return { icon: Zap, text: "Generating script components...", description: "Building your script structure" };
+      default:
+        // If we have a video idea but no processing step, we're likely just starting
+        if (videoIdea && !scriptComponents) {
+          return { icon: Loader2, text: "Starting script generation...", description: "Preparing to find sources for your video idea" };
         }
-      </div>
-    );
+        return { icon: Loader2, text: "Processing...", description: "Working on your script" };
+    }
   };
+
+  const stepInfo = getStepInfo(currentStep);
+  const Icon = stepInfo.icon;
 
   return (
-    <Tabs defaultValue={tabsData[0].value} className="w-full">
-      <TabsList className="w-full p-0 bg-background justify-start border-b rounded-none">
-        {tabsData.map((tab) => (
-          <TabsTrigger
-            key={tab.value}
-            value={tab.value}
-            className="rounded-none bg-background h-full data-[state=active]:shadow-none border-b-4 border-transparent data-[state=active]:border-primary px-4 py-2.5"
-          >
-            <tab.icon className="tabler-icon mr-2 h-4 w-4 shrink-0" />
-            <code className="text-sm font-poppins">{tab.name}</code>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      {tabsData.map((tab) => (
-        <TabsContent key={tab.value} value={tab.value} className="pt-6">
-          {tab.value === "research" ? (
-            isResearchProcessing ? (
-              <ThinkingTimeline isProcessing={isResearchProcessing} currentStep={researchCurrentStep} errorStep={researchErrorStep} />
-            ) : researchProcessingError ? (
-              <div className="text-red-500 p-4 border border-red-500 rounded-md">
-                <h3 className="font-semibold">Error during research processing:</h3>
-                <p>{researchProcessingError}</p>
-              </div>
-            ) : sources && sources.length > 0 ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Research Sources</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sources.map((source: Source, index: number) => {
-                    const tweetData = {
-                      id: source.id || `source-${index}`,
-                      user: {
-                        name: "Research Source",
-                        handle: new URL(source.link).hostname,
-                        verified: false,
-                      },
-                      text: source.title + (source.snippet ? `\n\nSnippet: ${source.snippet}` : ""),
-                      url: source.link,
-                      analyzed: false,
-                    };
-                    return (
-                      <Suspense key={tweetData.id} fallback={<TweetSkeleton />}>
-                        <ClientTweetCard
-                          tweet={tweetData}
-                          onError={(error: Error) => console.error("Tweet card error:", error)}
-                        />
-                      </Suspense>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center p-4 text-muted-foreground">
-                <p>No sources found or AI Writer search not initiated for a video idea yet.</p>
-                 {/* Display the processing error here if it's not a timeline display scenario */}
-                 {researchProcessingError && !isResearchProcessing && (
-                  <div className="text-red-500 p-4 border border-red-500 rounded-md mt-4">
-                    <h3 className="font-semibold">Error during research processing:</h3>
-                    <p>{researchProcessingError}</p>
-                  </div>
-                )}
-              </div>
-            )
-          ) : tab.value === "outline" ? (
-            renderOutlineContent()
-          ) : tab.value === "script" ? (
-            renderScriptContent()
-          ) : null }
-      </TabsContent>
-      ))}
-    </Tabs>
+    <div className="max-w-2xl mx-auto mb-6">
+      <Alert className={processingError ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"}>
+        <div className="flex items-center gap-3">
+          {processingError ? (
+            <X className="h-5 w-5 text-destructive" />
+          ) : (
+            <Icon className={cn("h-5 w-5 text-primary", currentStep && "animate-spin")} />
+          )}
+          <div className="flex-1">
+            <AlertDescription className="text-base font-semibold">
+              {processingError ? "Something went wrong" : stepInfo.text}
+            </AlertDescription>
+            <AlertDescription className="text-sm text-muted-foreground mt-1">
+              {processingError || stepInfo.description}
+            </AlertDescription>
+          </div>
+          {!processingError && (
+            <div className="flex items-center gap-2">
+              {sources.length > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {sources.length} sources
+                </Badge>
+              )}
+              {researchAnalysis && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  Research ✓
+                </Badge>
+              )}
+              {scriptComponents && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  Components ✓
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+      </Alert>
+    </div>
   );
 };
 
+// Main Page Component
 const AiWriterPageContent = () => {
+  const [selectedComponent, setSelectedComponent] = useState<ScriptComponent | null>(null);
+  const [scriptOutline, setScriptOutline] = useState<ScriptOutline>({});
+  const [showOptionsPanel, setShowOptionsPanel] = useState(false);
+  const [componentVariations, setComponentVariations] = useState<ScriptComponent[]>([]);
+
   const { 
-    videoIdea, 
-    triggerSearch,
     activeVoiceProfile,
     isLoadingVoiceProfile,
-    voiceProfileError,
-    deactivateVoiceProfile
+    deactivateVoiceProfile,
+    videoIdea,
+    setVideoIdea
   } = useAiWriterContext();
-  
-  const ideaTitle = videoIdea || "Enter a video idea to get started";
-  // Local state for the input field if needed, or use videoIdea from context directly if appropriate
-  // For example, if you want to type in an input and then click a button to trigger search:
-  const [localVideoIdea, setLocalVideoIdea] = useState("");
 
-  // If you want to reflect context's videoIdea in local state (e.g. if it can be set from elsewhere)
+  const { setTitle } = useTopBar();
+
+  // Set page title in topbar
   useEffect(() => {
-    setLocalVideoIdea(videoIdea || "");
-  }, [videoIdea]);
+    if (videoIdea) {
+      setTitle(videoIdea);
+    } else {
+      setTitle("AI Script Writer");
+    }
+    
+    return () => {
+      setTitle("");
+    };
+  }, [videoIdea, setTitle]);
 
-  const handleSearch = () => {
-    triggerSearch(localVideoIdea);
+  // Check for video idea in URL params when page loads
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ideaParam = urlParams.get('idea');
+      if (ideaParam && !videoIdea) {
+        setVideoIdea(ideaParam);
+      }
+    }
+  }, [videoIdea, setVideoIdea]);
+
+  // Mock variations generator (in real app, this could call an API)
+  const generateVariations = (component: ScriptComponent): ScriptComponent[] => {
+    const variations: ScriptComponent[] = [];
+    
+    for (let i = 1; i <= 3; i++) {
+      variations.push({
+        id: `${component.type}-variation-${i}-${Date.now()}`,
+        type: component.type,
+        title: `${component.title} (Option ${i})`,
+        content: `Alternative version ${i}: ${component.content}`,
+        emoji: component.emoji,
+      });
+    }
+    
+    return variations;
+  };
+
+  const handleComponentSelect = (component: ScriptComponent) => {
+    setSelectedComponent(component);
+    setComponentVariations(generateVariations(component));
+    setShowOptionsPanel(true);
+  };
+
+  const handleSelectVariation = (variation: ScriptComponent) => {
+    setScriptOutline((prev: ScriptOutline) => ({
+      ...prev,
+      [variation.type]: variation
+    }));
+    setSelectedComponent(variation);
+  };
+
+  const handleKeepOriginal = () => {
+    if (selectedComponent) {
+      setScriptOutline((prev: ScriptOutline) => ({
+        ...prev,
+        [selectedComponent.type]: selectedComponent
+      }));
+    }
+  };
+
+  const handleCloseOptions = () => {
+    setShowOptionsPanel(false);
+    setSelectedComponent(null);
   };
 
   const handleDeactivateVoice = async () => {
@@ -454,37 +634,74 @@ const AiWriterPageContent = () => {
   };
 
   return (
-    <div className="flex flex-col w-full space-y-4 md:space-y-6 pb-12">
+    <div className="flex flex-col w-full h-full">
       {/* Voice Profile Indicator */}
       {activeVoiceProfile && !isLoadingVoiceProfile && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-          <VoiceIndicator
-            voiceProfile={activeVoiceProfile}
-            onDeactivate={handleDeactivateVoice}
-            showDeactivate={true}
-          />
+        <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="max-w-2xl mx-auto">
+            <VoiceIndicator
+              voiceProfile={activeVoiceProfile}
+              onDeactivate={handleDeactivateVoice}
+              showDeactivate={true}
+            />
+          </div>
         </div>
       )}
 
-      {/* Example Search Input -  YOU NEED TO INTEGRATE THIS OR A SIMILAR MECHANISM */}
-      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-        <div className="flex gap-2 items-center p-2 border rounded-lg bg-background">
-          <input 
-            type="text" 
-            placeholder={activeVoiceProfile ? `Generate a script using ${activeVoiceProfile.sourceProfile.username}'s voice...` : "Enter your video idea here..."}
-            className="flex-grow p-2 border-none focus:ring-0 bg-transparent"
-            value={localVideoIdea}
-            onChange={(e) => setLocalVideoIdea(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-          />
-          <Button onClick={handleSearch}>Generate Insights</Button>
-        </div>
+      {/* Processing Status */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
+        <ProcessingStatus />
       </div>
-      
-      <TruncatedTitleHeader title={ideaTitle} />
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-8">
-        <div className="w-full">
-          <AiWriterTabs />
+
+      {/* Main Content - Centered Chat Layout */}
+      <div className="flex-1 flex justify-center">
+        <div className="w-full max-w-2xl">
+          {!showOptionsPanel ? (
+            // Single column chat layout
+            <ChatInterface
+              onComponentSelect={handleComponentSelect}
+              selectedComponent={selectedComponent}
+              scriptOutline={scriptOutline}
+            />
+          ) : (
+            // Two column layout with options panel
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              <ResizablePanel 
+                defaultSize={65} 
+                minSize={50} 
+                maxSize={80}
+                className="overflow-y-auto"
+              >
+                <div className="h-full overflow-y-auto">
+                  <ChatInterface
+                    onComponentSelect={handleComponentSelect}
+                    selectedComponent={selectedComponent}
+                    scriptOutline={scriptOutline}
+                  />
+                </div>
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle />
+              
+              <ResizablePanel 
+                defaultSize={35} 
+                minSize={20} 
+                maxSize={50}
+                className="overflow-y-auto"
+              >
+                <div className="h-full overflow-y-auto">
+                  <OptionsPanel
+                    selectedComponent={selectedComponent}
+                    variations={componentVariations}
+                    onSelectVariation={handleSelectVariation}
+                    onKeepOriginal={handleKeepOriginal}
+                    onClose={handleCloseOptions}
+                    isVisible={showOptionsPanel}
+                  />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          )}
         </div>
       </div>
     </div>
@@ -492,8 +709,5 @@ const AiWriterPageContent = () => {
 };
 
 export default function AiWriterPage() {
-  // Ensure AiWriterProvider is wrapping this page or a parent component in your layout structure
-  return (
-      <AiWriterPageContent />
-  );
+  return <AiWriterPageContent />;
 } 

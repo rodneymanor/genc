@@ -8,9 +8,11 @@ import { Inter } from "next/font/google";
 import { AiWriterProvider } from "@/contexts/AiWriterContext";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 import ModernSidebar from "@/components/layout/ModernSidebar";
 import TopBar from "@/components/layout/TopBar";
 import { TopBarProvider } from "@/components/layout/TopBarProvider";
+import SettingsOverlayWrapper from "@/components/settings/SettingsOverlayWrapper";
 
 export const metadata: Metadata = constructMetadata({});
 
@@ -53,15 +55,20 @@ export default function RootLayout({
               <AuthProvider>
                 <AiWriterProvider>
                   <TopBarProvider>
-                    <div className="flex h-screen overflow-hidden">
-                      <ModernSidebar />
-                      <main className="bg-[hsl(var(--background))] overflow-y-auto flex-1 w-0">
-                        <TopBar />
-                        <div className="p-4 md:p-6 h-full">
-                          {children}
-                        </div>
-                      </main>
-                    </div>
+                    <SettingsProvider>
+                      <div className="flex h-screen overflow-hidden">
+                        <ModernSidebar />
+                        <main className="bg-[hsl(var(--background))] overflow-y-auto flex-1 w-0">
+                          <TopBar />
+                          <div className="p-4 md:p-6 h-full">
+                        {children}
+                          </div>
+                        </main>
+                      </div>
+                      
+                      {/* Settings Overlay */}
+                      <SettingsOverlayWrapper />
+                    </SettingsProvider>
                   </TopBarProvider>
                   <Toaster />
                   <TailwindIndicator />
