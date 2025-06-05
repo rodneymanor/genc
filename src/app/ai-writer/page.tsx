@@ -75,36 +75,42 @@ const ComponentCard: React.FC<{
 }> = ({ component, onSelect, isSelected }) => {
   const config = componentConfig[component.type];
 
+  const handleClick = () => {
+    console.log("Component clicked:", component.type, component.title);
+    onSelect(component);
+  };
+
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
-        "bg-gray-800 border-gray-700 text-white rounded-xl",
-        isSelected && "ring-2 ring-blue-500 border-blue-500"
+        "cursor-pointer transition-all duration-200 hover:shadow-lg border-2 w-full",
+        "bg-card hover:bg-accent/5 border-border hover:border-accent/20",
+        "text-card-foreground rounded-lg",
+        isSelected && "ring-2 ring-primary border-primary bg-accent/10"
       )}
-      onClick={() => onSelect(component)}
+      onClick={handleClick}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">
-              <span className="text-lg">{config.emoji}</span>
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <span className="text-xl">{config.emoji}</span>
             </div>
-            <div>
-              <h4 className="font-semibold text-white text-sm">{config.label}</h4>
-              <p className="text-gray-400 text-xs">{config.description}</p>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-foreground text-sm leading-tight">{config.label}</h4>
+              <p className="text-muted-foreground text-xs mt-1 line-clamp-1">{config.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs px-2 py-1">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+            <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs px-2 py-1 border-0">
               Ready
             </Badge>
-            {isSelected && <CheckCircle className="w-4 h-4 text-green-400" />}
+            {isSelected && <CheckCircle className="w-4 h-4 text-primary" />}
           </div>
         </div>
         <div className="space-y-2">
-          <h5 className="font-medium text-white text-sm leading-tight">{component.title}</h5>
-          <p className="text-gray-300 text-xs leading-relaxed line-clamp-2">{component.content}</p>
+          <h5 className="font-medium text-foreground text-sm leading-tight line-clamp-1">{component.title}</h5>
+          <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2">{component.content}</p>
         </div>
       </CardContent>
     </Card>
@@ -392,14 +398,15 @@ const ChatInterface: React.FC<{
                         
                         {/* Render extracted components */}
                         {parseComponents(message.content).length > 0 && (
-                          <div className="space-y-3 mt-4">
+                          <div className="space-y-3 mt-4 w-full max-w-none">
                             {parseComponents(message.content).map((component) => (
-                              <ComponentCard
-                                key={component.id}
-                                component={component}
-                                onSelect={onComponentSelect}
-                                isSelected={selectedComponent?.id === component.id}
-                              />
+                              <div key={component.id} className="w-full">
+                                <ComponentCard
+                                  component={component}
+                                  onSelect={onComponentSelect}
+                                  isSelected={selectedComponent?.id === component.id}
+                                />
+                              </div>
                             ))}
                           </div>
                         )}
@@ -596,6 +603,14 @@ const AiWriterPageContent = () => {
     };
   }, [videoIdea, setTitle]);
 
+  // Force panel re-render when options panel visibility changes
+  useEffect(() => {
+    console.log("[useEffect] showOptionsPanel changed to:", showOptionsPanel);
+    if (showOptionsPanel) {
+      console.log("[useEffect] Selected component:", selectedComponent?.type);
+    }
+  }, [showOptionsPanel, selectedComponent]);
+
   // Check for video idea in URL params when page loads
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -625,9 +640,14 @@ const AiWriterPageContent = () => {
   };
 
   const handleComponentSelect = (component: ScriptComponent) => {
+    console.log("[handleComponentSelect] Component selected:", component.type, component.title);
+    console.log("[handleComponentSelect] Current showOptionsPanel:", showOptionsPanel);
+    
     setSelectedComponent(component);
     setComponentVariations(generateVariations(component));
     setShowOptionsPanel(true);
+    
+    console.log("[handleComponentSelect] Set showOptionsPanel to true");
   };
 
   const handleSelectVariation = (variation: ScriptComponent) => {
@@ -687,8 +707,8 @@ const AiWriterPageContent = () => {
           {/* Chat Interface Panel */}
           <ResizablePanel 
             defaultSize={showOptionsPanel ? 65 : 100} 
-            minSize={showOptionsPanel ? 50 : 100} 
-            maxSize={showOptionsPanel ? 80 : 100}
+            minSize={showOptionsPanel ? 40 : 100} 
+            maxSize={showOptionsPanel ? 85 : 100}
             className="overflow-y-auto"
           >
             <div className="h-full overflow-y-auto">
@@ -701,17 +721,17 @@ const AiWriterPageContent = () => {
           </ResizablePanel>
           
           {/* Resizable Handle - Always present but hidden when not needed */}
-          <ResizableHandle withHandle className={showOptionsPanel ? "" : "hidden"} />
+          <ResizableHandle withHandle className={showOptionsPanel ? "opacity-100" : "opacity-0 pointer-events-none"} />
           
           {/* Options Panel - Always present but collapsed when not needed */}
           <ResizablePanel 
             defaultSize={showOptionsPanel ? 35 : 0} 
-            minSize={0} 
-            maxSize={showOptionsPanel ? 50 : 0}
-            className={cn("overflow-y-auto transition-all", !showOptionsPanel && "w-0 min-w-0")}
+            minSize={showOptionsPanel ? 25 : 0} 
+            maxSize={showOptionsPanel ? 60 : 0}
+            className="overflow-y-auto"
             collapsible={true}
           >
-            <div className={cn("h-full overflow-y-auto", !showOptionsPanel && "hidden")}>
+            <div className={cn("h-full", showOptionsPanel ? "opacity-100" : "opacity-0 pointer-events-none")}>
               <OptionsPanel
                 selectedComponent={selectedComponent}
                 variations={componentVariations}
