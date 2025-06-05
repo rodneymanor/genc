@@ -687,7 +687,7 @@ const AiWriterPageContent = () => {
           {/* Chat Interface Panel */}
           <ResizablePanel 
             defaultSize={showOptionsPanel ? 65 : 100} 
-            minSize={50} 
+            minSize={showOptionsPanel ? 50 : 100} 
             maxSize={showOptionsPanel ? 80 : 100}
             className="overflow-y-auto"
           >
@@ -700,29 +700,28 @@ const AiWriterPageContent = () => {
             </div>
           </ResizablePanel>
           
-          {/* Options Panel - Conditionally Rendered */}
-          {showOptionsPanel && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel 
-                defaultSize={35} 
-                minSize={20} 
-                maxSize={50}
-                className="overflow-y-auto"
-              >
-                <div className="h-full overflow-y-auto">
-                  <OptionsPanel
-                    selectedComponent={selectedComponent}
-                    variations={componentVariations}
-                    onSelectVariation={handleSelectVariation}
-                    onKeepOriginal={handleKeepOriginal}
-                    onClose={handleCloseOptions}
-                    isVisible={showOptionsPanel}
-                  />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
+          {/* Resizable Handle - Always present but hidden when not needed */}
+          <ResizableHandle withHandle className={showOptionsPanel ? "" : "hidden"} />
+          
+          {/* Options Panel - Always present but collapsed when not needed */}
+          <ResizablePanel 
+            defaultSize={showOptionsPanel ? 35 : 0} 
+            minSize={0} 
+            maxSize={showOptionsPanel ? 50 : 0}
+            className={cn("overflow-y-auto transition-all", !showOptionsPanel && "w-0 min-w-0")}
+            collapsible={true}
+          >
+            <div className={cn("h-full overflow-y-auto", !showOptionsPanel && "hidden")}>
+              <OptionsPanel
+                selectedComponent={selectedComponent}
+                variations={componentVariations}
+                onSelectVariation={handleSelectVariation}
+                onKeepOriginal={handleKeepOriginal}
+                onClose={handleCloseOptions}
+                isVisible={showOptionsPanel}
+              />
+            </div>
+          </ResizablePanel>
         </ResizablePanelGroup>
       </div>
     </div>
