@@ -16,6 +16,7 @@ import type { Message } from "ai/react";
 import { useTopBar } from "@/components/layout/TopBarProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import ResizablePanelLayout, { usePanelConfig } from "@/components/layout/ResizablePanelLayout";
+import ThinkingTimeline from "@/components/interactive/ThinkingTimeline";
 
 // Script component types
 type ComponentType = "hook" | "bridge" | "goldenNugget" | "wta";
@@ -127,7 +128,13 @@ const OptionsPanel: React.FC<{
   onClose: () => void;
   isVisible: boolean;
 }> = ({ selectedComponent, variations, onSelectVariation, onKeepOriginal, onClose, isVisible }) => {
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return (
+      <div className="h-full bg-background border-l" style={{ display: 'none' }}>
+        {/* Hidden panel content */}
+      </div>
+    );
+  }
 
   if (!selectedComponent) {
       return (
@@ -229,14 +236,18 @@ const ChatInterface: React.FC<{
     currentStep, 
     scriptComponents,
     sources,
-    researchAnalysis 
+    researchAnalysis,
+    processingError
   } = useAiWriterContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasInitializedRef = useRef(false); // Use ref instead of state to persist across re-renders
 
-  // Auto-start conversation when script components are ready
+  // Auto-start conversation when script components are ready OR when processing starts
   useEffect(() => {
-    if (videoIdea && scriptComponents && !hasInitializedRef.current && messages.length === 0) {
+    // Start chat if we have a video idea and either:
+    // 1. Script components are ready, OR 
+    // 2. We're actively processing
+    if (videoIdea && (scriptComponents || isProcessing) && !hasInitializedRef.current && messages.length === 0) {
       hasInitializedRef.current = true;
       
       // Add user message
@@ -245,7 +256,35 @@ const ChatInterface: React.FC<{
         content: `Help me create a video script about: "${videoIdea}"`
       });
       
-      // Automatically add AI response with specific, generated script components
+      // Only add AI response if script components are ready
+      if (scriptComponents) {
+        setTimeout(() => {
+          append({
+            role: "assistant",
+            content: `I've generated a complete script outline for "${videoIdea}". Here are your four key components:
+
+[HOOK] Did You Know This Changes Everything? || Did you know that ${videoIdea.toLowerCase()} could completely transform your approach? Most people get this wrong, but I'm about to show you the game-changing method that industry experts don't want you to know.
+
+[BRIDGE] Here's What I Discovered || Last month, I spent 30 days testing different approaches to ${videoIdea.toLowerCase()}, and what I found shocked me. The conventional wisdom? Completely backwards. Let me walk you through the breakthrough that changed my perspective forever.
+
+[GOLDENNUGGET] The 3-Step Framework || Here's the exact 3-step framework that makes ${videoIdea.toLowerCase()} incredibly effective: First, identify the core problem everyone faces. Second, apply the counterintuitive solution that actually works. Third, implement the simple daily habit that ensures lasting results.
+
+[WTA] Your Next Action Step || If this resonates with you, here's what I want you to do right now: comment below with your biggest challenge related to ${videoIdea.toLowerCase()}, and I'll personally respond with a customized tip. Don't forget to subscribe for more insights like this!
+
+✨ Click on any component above to customize it with alternative versions and fine-tune your script!`
+          });
+        }, 1500);
+      }
+    }
+  }, [videoIdea, scriptComponents, isProcessing, messages.length, append]);
+
+  // Add AI response when script components become available after processing
+  useEffect(() => {
+    // Only add AI response if:
+    // 1. Chat has been initialized (has messages)
+    // 2. Script components are now available
+    // 3. We don't already have an assistant message
+    if (videoIdea && scriptComponents && messages.length > 0 && !messages.some(m => m.role === "assistant")) {
       setTimeout(() => {
         append({
           role: "assistant",
@@ -261,9 +300,9 @@ const ChatInterface: React.FC<{
 
 ✨ Click on any component above to customize it with alternative versions and fine-tune your script!`
         });
-      }, 1500);
+      }, 1000); // Shorter delay since processing is already complete
     }
-  }, [videoIdea, scriptComponents, messages.length, append]);
+  }, [scriptComponents, videoIdea, messages, append]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -319,34 +358,6 @@ const ChatInterface: React.FC<{
   const emptyState = getEmptyStateContent();
   const EmptyIcon = emptyState.icon;
 
-  // Get current AI status for persistent indicator
-  const getCurrentAIStatus = () => {
-    if (isLoading) {
-      return { text: "AI is thinking...", icon: Brain, animate: true };
-    }
-    
-    if (isProcessing) {
-      switch (currentStep) {
-        case "search":
-          return { text: "Searching for sources...", icon: Search, animate: true };
-        case "extract":
-          return { text: "Extracting content...", icon: FileText, animate: true };
-        case "analyze":
-          return { text: "Analyzing research...", icon: Brain, animate: true };
-        default:
-          return { text: "Processing...", icon: Loader2, animate: true };
-      }
-    }
-
-    if (scriptComponents && researchAnalysis) {
-      return { text: "Ready to help with your script", icon: Sparkles, animate: false };
-    }
-
-    return null;
-  };
-
-  const aiStatus = getCurrentAIStatus();
-
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Scrollable Messages Area */}
@@ -371,52 +382,75 @@ const ChatInterface: React.FC<{
               </div>
             )}
 
-            {messages.map((message: Message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex w-full",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
-              >
+            {messages.map((message: Message, index: number) => (
+              <div key={message.id}>
                 <div
                   className={cn(
-                    "max-w-[90%] rounded-lg px-4 py-2",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    "flex w-full",
+                    message.role === "user" ? "justify-end" : "justify-start"
                   )}
                 >
-                  {message.role === "assistant" ? (
-                    <div className="space-y-3">
-                      <div className="prose prose-sm max-w-none">
-                        {/* Render the text content, excluding component markers */}
-                        <p className="text-sm leading-relaxed">
-                          {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
-                        </p>
-                      </div>
-                      
-                      {/* Render extracted components */}
-                      {parseComponents(message.content).length > 0 && (
-                        <div className="space-y-3 mt-4 w-full max-w-none">
-                          {parseComponents(message.content).map((component) => (
-                            <div key={component.id} className="w-full">
-                              <ComponentCard
-                                component={component}
-                                onSelect={onComponentSelect}
-                                isSelected={selectedComponent?.id === component.id}
-                              />
-                            </div>
-                          ))}
+                  <div
+                    className={cn(
+                      "max-w-[90%] rounded-lg px-4 py-2",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    )}
+                  >
+                    {message.role === "assistant" ? (
+                      <div className="space-y-3">
+                        <div className="prose prose-sm max-w-none">
+                          {/* Render the text content, excluding component markers */}
+                          <p className="text-sm leading-relaxed">
+                            {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm">{message.content}</p>
-                  )}
+                        
+                        {/* Render extracted components */}
+                        {parseComponents(message.content).length > 0 && (
+                          <div className="space-y-3 mt-4 w-full max-w-none">
+                            {parseComponents(message.content).map((component) => (
+                              <div key={component.id} className="w-full">
+                                <ComponentCard
+                                  component={component}
+                                  onSelect={onComponentSelect}
+                                  isSelected={selectedComponent?.id === component.id}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm">{message.content}</p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Show ThinkingTimeline after the first user message */}
+                {index === 0 && message.role === "user" && (isProcessing || processingError) && (
+                  <div className="mt-4">
+                    <ThinkingTimeline
+                      isProcessing={isProcessing}
+                      currentStep={currentStep}
+                      errorStep={processingError ? currentStep : null}
+                    />
+                  </div>
+                )}
               </div>
             ))}
+            
+            {/* Show ThinkingTimeline if processing but no messages yet */}
+            {messages.length === 0 && videoIdea && (isProcessing || processingError) && (
+              <div className="mt-4">
+                <ThinkingTimeline
+                  isProcessing={isProcessing}
+                  currentStep={currentStep}
+                  errorStep={processingError ? currentStep : null}
+                />
+              </div>
+            )}
             
             {/* AI Thinking Indicator in Chat */}
             {isLoading && (
@@ -441,27 +475,9 @@ const ChatInterface: React.FC<{
           </div>
         </div>
       </div>
-
+      
       {/* Sticky Bottom Section - Fixed at bottom */}
       <div className="flex-shrink-0 border-t bg-background">
-        {/* Persistent AI Status Bar (above input) */}
-        {aiStatus && (
-          <div className="bg-muted/50 px-4 py-2">
-            <div className="max-w-3xl mx-auto flex items-center gap-2">
-              <aiStatus.icon className={cn(
-                "w-4 h-4 text-muted-foreground",
-                aiStatus.animate && "animate-spin"
-              )} />
-              <span className="text-xs text-muted-foreground">{aiStatus.text}</span>
-              {sources.length > 0 && (
-                <Badge variant="secondary" className="text-xs ml-auto">
-                  {sources.length} sources ready
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Input Form */}
         <div className="p-4">
           <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
@@ -488,92 +504,6 @@ const ChatInterface: React.FC<{
           </form>
         </div>
       </div>
-    </div>
-  );
-};
-
-// Processing Status Component
-const ProcessingStatus: React.FC = () => {
-  const { 
-    isProcessing, 
-    currentStep, 
-    processingError, 
-    isExtractingContent,
-    isLoadingResearchAnalysis,
-    isLoadingScriptComponents,
-    sources,
-    researchAnalysis,
-    scriptComponents,
-    videoIdea
-  } = useAiWriterContext();
-
-  // Show status if there's any processing OR if we just arrived with a video idea but no components yet
-  const shouldShowStatus = isProcessing || processingError || (videoIdea && !scriptComponents);
-
-  if (!shouldShowStatus) return null;
-
-  const getStepInfo = (step: string | null) => {
-    switch (step) {
-      case "init":
-        return { icon: Loader2, text: "Initializing...", description: "Setting up your script generation" };
-      case "search":
-        return { icon: Search, text: "Searching for sources...", description: "Finding relevant content for your video idea" };
-      case "extract":
-        return { icon: FileText, text: "Extracting content...", description: `Reading ${sources.length} source${sources.length !== 1 ? 's' : ''} and processing materials` };
-      case "analyze":
-        return { icon: Brain, text: "Analyzing research...", description: "Creating insights from your sources" };
-      case "components":
-        return { icon: Zap, text: "Generating script components...", description: "Building your script structure" };
-      default:
-        // If we have a video idea but no processing step, we're likely just starting
-        if (videoIdea && !scriptComponents) {
-          return { icon: Loader2, text: "Starting script generation...", description: "Preparing to find sources for your video idea" };
-        }
-        return { icon: Loader2, text: "Processing...", description: "Working on your script" };
-    }
-  };
-
-  const stepInfo = getStepInfo(currentStep);
-  const Icon = stepInfo.icon;
-
-  return (
-    <div className="max-w-2xl mx-auto mb-6">
-      <Alert className={processingError ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"}>
-        <div className="flex items-center gap-3">
-          {processingError ? (
-            <X className="h-5 w-5 text-destructive" />
-          ) : (
-            <Icon className={cn("h-5 w-5 text-primary", currentStep && "animate-spin")} />
-          )}
-          <div className="flex-1">
-            <AlertDescription className="text-base font-semibold">
-              {processingError ? "Something went wrong" : stepInfo.text}
-            </AlertDescription>
-            <AlertDescription className="text-sm text-muted-foreground mt-1">
-              {processingError || stepInfo.description}
-            </AlertDescription>
-          </div>
-          {!processingError && (
-            <div className="flex items-center gap-2">
-              {sources.length > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {sources.length} sources
-                </Badge>
-              )}
-              {researchAnalysis && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  Research ✓
-                </Badge>
-              )}
-              {scriptComponents && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  Components ✓
-                </Badge>
-              )}
-            </div>
-          )}
-        </div>
-      </Alert>
     </div>
   );
 };
@@ -818,15 +748,10 @@ const AiWriterPageContent = () => {
           </div>
         </div>
       )}
-
-      {/* Processing Status */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <ProcessingStatus />
-      </div>
     </div>
   );
 
-  // Configure panels
+  // Configure panels - always render both panels for stable layout
   const panels = [
     createPanel(
       "chat",
@@ -843,30 +768,28 @@ const AiWriterPageContent = () => {
       { 
         scrollable: false // Disable panel scrolling - ChatInterface handles its own scrolling
       }
+    ),
+    createPanel(
+      "options",
+      <OptionsPanel
+        selectedComponent={selectedComponent}
+        variations={componentVariations}
+        onSelectVariation={handleSelectVariation}
+        onKeepOriginal={handleKeepOriginal}
+        onClose={handleCloseOptions}
+        isVisible={showOptionsPanel}
+      />,
+      { 
+        default: showOptionsPanel ? 35 : 0, 
+        min: showOptionsPanel ? 25 : 0, 
+        max: showOptionsPanel ? 60 : 0 
+      },
+      { 
+        collapsible: true,
+        scrollable: true 
+      }
     )
   ];
-
-  // Add options panel if visible
-  if (showOptionsPanel) {
-    panels.push(
-      createPanel(
-        "options",
-        <OptionsPanel
-          selectedComponent={selectedComponent}
-          variations={componentVariations}
-          onSelectVariation={handleSelectVariation}
-          onKeepOriginal={handleKeepOriginal}
-          onClose={handleCloseOptions}
-          isVisible={showOptionsPanel}
-        />,
-        { default: 35, min: 25, max: 60 },
-        { 
-          collapsible: true,
-          scrollable: true 
-        }
-      )
-    );
-  }
 
   return (
     <ResizablePanelLayout

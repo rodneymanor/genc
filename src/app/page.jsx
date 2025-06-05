@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { Search, Brain, Link as LinkIcon, FileText, BookOpen, PenTool, CheckCircle, Clock, Circle, ArrowUp, ChevronDown, Sparkles, Download, Copy, Loader2, Zap, Mic, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -100,6 +100,11 @@ const MainColumn = ({ localVideoIdea, setLocalVideoIdea }) => {
   const router = useRouter();
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Clear search bar when returning to main page
+  useEffect(() => {
+    setLocalVideoIdea("");
+  }, [setLocalVideoIdea]); // Include setLocalVideoIdea in dependency array
 
   useEffect(() => {
     if (videoIdea && !localVideoIdea) {
@@ -354,6 +359,11 @@ const AiWriterPageContent = () => {
   const { setRecordButton, setCollapseButton } = useTopBar();
   const { createPanel } = usePanelConfig();
 
+  // Stable setter function to prevent unnecessary re-renders
+  const setLocalVideoIdeaCallback = useCallback((value) => {
+    setLocalVideoIdea(value);
+  }, []);
+
   // Handle record button click to show recording column
   const handleRecordClick = () => {
     setShowRecordingColumn(true);
@@ -366,7 +376,7 @@ const AiWriterPageContent = () => {
 
   // Handle video idea selection from side column
   const handleVideoIdeaSelect = (idea) => {
-    setLocalVideoIdea(idea);
+    setLocalVideoIdeaCallback(idea);
   };
 
   // Set up topbar buttons based on recording column state
@@ -416,7 +426,7 @@ const AiWriterPageContent = () => {
   const panels = [
     createPanel(
       "main",
-      <MainColumn localVideoIdea={localVideoIdea} setLocalVideoIdea={setLocalVideoIdea} />,
+      <MainColumn localVideoIdea={localVideoIdea} setLocalVideoIdea={setLocalVideoIdeaCallback} />,
       { 
         default: showRecordingColumn ? 45 : 65, 
         min: 35, 
