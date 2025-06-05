@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { ScriptComponents, UserSelectedScriptComponents, ScriptHook, ScriptFactset, ScriptTake, ScriptOutro, ScriptBridge, ScriptGoldenNugget, ScriptWTA } from '@/lib/types/scriptComponents'; // Import all necessary types
 import { VoiceProfileData, getActiveVoiceProfile, deactivateAllVoiceProfiles } from '@/lib/firestoreService';
+import { AuthContext } from '@/contexts/AuthContext';
 
 export interface Source {
   title: string;
@@ -77,6 +78,44 @@ interface AiWriterContextType {
   voiceProfileError: string | null;
   loadActiveVoiceProfile: () => Promise<void>;
   deactivateVoiceProfile: () => Promise<void>;
+
+  // Voice Engine Configuration State
+  voiceInfluenceSettings: {
+    hooks: boolean;
+    bridges: boolean;
+    goldenNuggets: boolean;
+    wtas: boolean;
+    languagePatterns: boolean;
+    toneApplication: boolean;
+  };
+  setVoiceInfluenceSettings: (settings: {
+    hooks: boolean;
+    bridges: boolean;
+    goldenNuggets: boolean;
+    wtas: boolean;
+    languagePatterns: boolean;
+    toneApplication: boolean;
+  }) => void;
+  updateVoiceInfluenceSetting: (key: string, value: boolean) => void;
+
+  // Custom Hooks State
+  customHooks: Array<{
+    id: string;
+    title: string;
+    template: string;
+    example?: string;
+    category: string;
+    isActive: boolean;
+  }>;
+  setCustomHooks: (hooks: Array<{
+    id: string;
+    title: string;
+    template: string;
+    example?: string;
+    category: string;
+    isActive: boolean;
+  }>) => void;
+  loadUserVoiceSettings: () => Promise<void>;
 }
 
 export const AiWriterContext = createContext<AiWriterContextType | undefined>(undefined);
@@ -115,10 +154,47 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
   const [isLoadingVoiceProfile, setIsLoadingVoiceProfile] = useState(false);
   const [voiceProfileError, setVoiceProfileError] = useState<string | null>(null);
 
-  // Load active voice profile on context initialization
+  // Voice Engine Configuration State
+  const [voiceInfluenceSettings, setVoiceInfluenceSettings] = useState({
+    hooks: false,
+    bridges: false,
+    goldenNuggets: false,
+    wtas: false,
+    languagePatterns: false,
+    toneApplication: false
+  });
+
+  // Custom Hooks State
+  const [customHooks, setCustomHooks] = useState<Array<{
+    id: string;
+    title: string;
+    template: string;
+    example?: string;
+    category: string;
+    isActive: boolean;
+  }>>([]);
+
+  // Get user context for loading settings
+  const userProfile = useContext(AuthContext)?.userProfile;
+
+  // Load active voice profile and user settings on context initialization
   useEffect(() => {
     loadActiveVoiceProfile();
+    loadUserVoiceSettings();
   }, []);
+
+  // Save voice settings to localStorage when they change
+  useEffect(() => {
+    if (userProfile?.uid) {
+      localStorage.setItem(`voiceInfluenceSettings_${userProfile.uid}`, JSON.stringify(voiceInfluenceSettings));
+    }
+  }, [voiceInfluenceSettings, userProfile?.uid]);
+
+  useEffect(() => {
+    if (userProfile?.uid) {
+      localStorage.setItem(`customHooks_${userProfile.uid}`, JSON.stringify(customHooks));
+    }
+  }, [customHooks, userProfile?.uid]);
 
   const setUserSelectedComponents = (selected: UserSelectedScriptComponents | null) => {
     setUserSelectedComponentsState(selected);
@@ -138,6 +214,34 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
 
   const updateSelectedWTA = (wta: ScriptWTA | null) => {
     setUserSelectedComponentsState(prev => ({ ...(prev || { hook: null, bridge: null, goldenNugget: null, wta: null }), wta }));
+  };
+
+  // Voice Engine Configuration Functions
+  const updateVoiceInfluenceSetting = (key: string, value: boolean) => {
+    setVoiceInfluenceSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const loadUserVoiceSettings = async () => {
+    if (!userProfile?.uid) return;
+
+    try {
+      // Load voice influence settings from localStorage
+      const savedInfluenceSettings = localStorage.getItem(`voiceInfluenceSettings_${userProfile.uid}`);
+      if (savedInfluenceSettings) {
+        setVoiceInfluenceSettings(JSON.parse(savedInfluenceSettings));
+      }
+
+      // Load custom hooks from localStorage
+      const savedCustomHooks = localStorage.getItem(`customHooks_${userProfile.uid}`);
+      if (savedCustomHooks) {
+        setCustomHooks(JSON.parse(savedCustomHooks));
+      }
+    } catch (error) {
+      console.error('Error loading voice settings:', error);
+    }
   };
 
   const extractContentFromAllSources = async (currentSourcesParam?: Source[], currentVideoIdea?: string) => {
@@ -365,10 +469,25 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
     setFinalScriptError(null);
 
     try {
+      // Build request body with voice engine integration
+      const requestBody = {
+        videoIdea,
+        researchSources: sources,
+        voiceProfile: activeVoiceProfile,
+        voiceInfluenceSettings,
+        customHooks
+      };
+
+      console.log('[Context] Generating script components with voice integration:', {
+        hasVoiceProfile: !!activeVoiceProfile,
+        activeInfluences: Object.entries(voiceInfluenceSettings).filter(([_, enabled]) => enabled).length,
+        customHooksCount: customHooks.filter(h => h.isActive).length
+      });
+
       const response = await fetch('/api/generate-script-components', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoIdea, researchSources: sources }),
+        body: JSON.stringify(requestBody),
       });
 
       const data: ScriptComponents | { message: string; rawResponse?: string; error?: string } = await response.json();
@@ -499,10 +618,25 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setScriptComponentsError(null);
 
       try {
+        // Build request body with voice engine integration
+        const componentsRequestBody = {
+          videoIdea: currentVideoIdea || videoIdea,
+          researchAnalysisText: data.researchAnalysisText,
+          voiceProfile: activeVoiceProfile,
+          voiceInfluenceSettings,
+          customHooks
+        };
+
+        console.log('[Context] Generating script components from analysis with voice integration:', {
+          hasVoiceProfile: !!activeVoiceProfile,
+          activeInfluences: Object.entries(voiceInfluenceSettings).filter(([_, enabled]) => enabled).length,
+          customHooksCount: customHooks.filter(h => h.isActive).length
+        });
+
         const componentsResponse = await fetch('/api/generate-script-components', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoIdea: currentVideoIdea || videoIdea, researchAnalysisText: data.researchAnalysisText }),
+          body: JSON.stringify(componentsRequestBody),
         });
 
         const componentsData: ScriptComponents | { message: string; rawResponse?: string; error?: string, errorDetails?: string, blockReason?: string, safetyRatings?: any, promptFeedback?: any } = await componentsResponse.json();
@@ -630,13 +764,20 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AiWriterContext.Provider value={{
-      isProcessing, setIsProcessing,
-      currentStep, setCurrentStep,
-      processingError, setProcessingError,
-      errorStep, setErrorStep,
-      sources, setSources,
-      videoIdea, setVideoIdea,
-      isAiWriterSearchActive, setIsAiWriterSearchActive,
+      isProcessing,
+      setIsProcessing,
+      currentStep,
+      setCurrentStep,
+      processingError,
+      setProcessingError,
+      errorStep,
+      setErrorStep,
+      sources,
+      setSources,
+      videoIdea,
+      setVideoIdea,
+      isAiWriterSearchActive,
+      setIsAiWriterSearchActive,
       triggerSearch,
       isExtractingContent,
       setIsExtractingContent,
@@ -649,22 +790,39 @@ export const AiWriterProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingResearchAnalysis,
       researchAnalysisError,
       setResearchAnalysisError,
-      scriptComponents, setScriptComponents,
-      isLoadingScriptComponents, setIsLoadingScriptComponents,
-      scriptComponentsError, setScriptComponentsError,
-      userSelectedComponents, setUserSelectedComponents,
-      updateSelectedHook, updateSelectedBridge, updateSelectedGoldenNugget, updateSelectedWTA,
+      scriptComponents,
+      setScriptComponents,
+      isLoadingScriptComponents,
+      setIsLoadingScriptComponents,
+      scriptComponentsError,
+      setScriptComponentsError,
+      userSelectedComponents,
+      setUserSelectedComponents,
+      updateSelectedHook,
+      updateSelectedBridge,
+      updateSelectedGoldenNugget,
+      updateSelectedWTA,
       generateScriptComponents,
       analyzeAndGenerateOutlines,
-      finalScript, setFinalScript,
-      isLoadingFinalScript, setIsLoadingFinalScript,
-      finalScriptError, setFinalScriptError,
+      finalScript,
+      setFinalScript,
+      isLoadingFinalScript,
+      setIsLoadingFinalScript,
+      finalScriptError,
+      setFinalScriptError,
       generateFinalScript,
-      activeVoiceProfile, setActiveVoiceProfile,
+      activeVoiceProfile,
+      setActiveVoiceProfile,
       isLoadingVoiceProfile,
       voiceProfileError,
       loadActiveVoiceProfile,
-      deactivateVoiceProfile
+      deactivateVoiceProfile,
+      voiceInfluenceSettings,
+      setVoiceInfluenceSettings,
+      updateVoiceInfluenceSetting,
+      customHooks,
+      setCustomHooks,
+      loadUserVoiceSettings
     }}>
       {children}
     </AiWriterContext.Provider>
