@@ -15,6 +15,7 @@ import { useAiWriterContext } from "@/contexts/AiWriterContext";
 import type { Message } from "ai/react";
 import { useTopBar } from "@/components/layout/TopBarProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import ResizablePanelLayout, { usePanelConfig } from "@/components/layout/ResizablePanelLayout";
 
 // Script component types
 type ComponentType = "hook" | "bridge" | "goldenNugget" | "wta";
@@ -348,101 +349,97 @@ const ChatInterface: React.FC<{
 
   return (
     <div className="h-full flex flex-col bg-background relative">
-      {/* Scrollable Messages Area */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-4 pb-20 flex justify-center"> {/* Extra bottom padding to account for sticky input */}
-            <div className="space-y-4 max-w-3xl w-full">
-              {messages.length === 0 && (
-                <div className="text-center py-8">
-                  <div className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
-                    isProcessing ? "bg-primary/10" : "bg-primary/10"
-                  )}>
-                    <EmptyIcon className={cn(
-                      "w-8 h-8",
-                      isProcessing ? "text-primary animate-pulse" : "text-primary"
-                    )} />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{emptyState.title}</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    {emptyState.description}
-                  </p>
-                </div>
-              )}
-
-              {messages.map((message: Message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex w-full",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[90%] rounded-lg px-4 py-2",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    )}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="space-y-3">
-                        <div className="prose prose-sm max-w-none">
-                          {/* Render the text content, excluding component markers */}
-                          <p className="text-sm leading-relaxed">
-                            {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
-                          </p>
-                        </div>
-                        
-                        {/* Render extracted components */}
-                        {parseComponents(message.content).length > 0 && (
-                          <div className="space-y-3 mt-4 w-full max-w-none">
-                            {parseComponents(message.content).map((component) => (
-                              <div key={component.id} className="w-full">
-                                <ComponentCard
-                                  component={component}
-                                  onSelect={onComponentSelect}
-                                  isSelected={selectedComponent?.id === component.id}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm">{message.content}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {/* AI Thinking Indicator in Chat */}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[90%]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                      </div>
-                      <span className="text-xs text-muted-foreground">AI is thinking...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
+      {/* Messages Area - Let panel handle scrolling */}
+      <div className="flex-1 min-h-0 flex justify-center">
+        <div className="space-y-4 max-w-3xl w-full py-4">
+          {messages.length === 0 && (
+            <div className="text-center py-8">
+              <div className={cn(
+                "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+                isProcessing ? "bg-primary/10" : "bg-primary/10"
+              )}>
+                <EmptyIcon className={cn(
+                  "w-8 h-8",
+                  isProcessing ? "text-primary animate-pulse" : "text-primary"
+                )} />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{emptyState.title}</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {emptyState.description}
+              </p>
             </div>
-          </div>
-        </ScrollArea>
+          )}
+
+          {messages.map((message: Message) => (
+            <div
+              key={message.id}
+              className={cn(
+                "flex w-full",
+                message.role === "user" ? "justify-end" : "justify-start"
+              )}
+            >
+              <div
+                className={cn(
+                  "max-w-[90%] rounded-lg px-4 py-2",
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                )}
+              >
+                {message.role === "assistant" ? (
+                  <div className="space-y-3">
+                    <div className="prose prose-sm max-w-none">
+                      {/* Render the text content, excluding component markers */}
+                      <p className="text-sm leading-relaxed">
+                        {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
+                      </p>
+                    </div>
+                    
+                    {/* Render extracted components */}
+                    {parseComponents(message.content).length > 0 && (
+                      <div className="space-y-3 mt-4 w-full max-w-none">
+                        {parseComponents(message.content).map((component) => (
+                          <div key={component.id} className="w-full">
+                            <ComponentCard
+                              component={component}
+                              onSelect={onComponentSelect}
+                              isSelected={selectedComponent?.id === component.id}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm">{message.content}</p>
+                )}
+              </div>
+            </div>
+          ))}
+          
+          {/* AI Thinking Indicator in Chat */}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted rounded-lg px-4 py-2 max-w-[90%]">
+                <div className="flex items-center gap-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">AI is thinking...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Persistent AI Status Bar (above input) */}
       {aiStatus && (
-        <div className="border-t bg-muted/50 px-4 py-2">
+        <div className="border-t bg-muted/50 px-4 py-2 flex-shrink-0">
           <div className="max-w-3xl mx-auto flex items-center gap-2">
             <aiStatus.icon className={cn(
               "w-4 h-4 text-muted-foreground",
@@ -459,7 +456,7 @@ const ChatInterface: React.FC<{
       )}
 
       {/* Sticky Input at Bottom */}
-      <div className="border-t bg-background p-4">
+      <div className="border-t bg-background p-4 flex-shrink-0">
         <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
           <Input
             value={input}
@@ -589,6 +586,7 @@ const AiWriterPageContent = () => {
   } = useAiWriterContext();
 
   const { setTitle } = useTopBar();
+  const { createPanel } = usePanelConfig();
 
   // Set page title in topbar
   useEffect(() => {
@@ -602,14 +600,6 @@ const AiWriterPageContent = () => {
       setTitle("");
     };
   }, [videoIdea, setTitle]);
-
-  // Force panel re-render when options panel visibility changes
-  useEffect(() => {
-    console.log("[useEffect] showOptionsPanel changed to:", showOptionsPanel);
-    if (showOptionsPanel) {
-      console.log("[useEffect] Selected component:", selectedComponent?.type);
-    }
-  }, [showOptionsPanel, selectedComponent]);
 
   // Check for video idea in URL params when page loads
   useEffect(() => {
@@ -641,13 +631,10 @@ const AiWriterPageContent = () => {
 
   const handleComponentSelect = (component: ScriptComponent) => {
     console.log("[handleComponentSelect] Component selected:", component.type, component.title);
-    console.log("[handleComponentSelect] Current showOptionsPanel:", showOptionsPanel);
     
     setSelectedComponent(component);
     setComponentVariations(generateVariations(component));
     setShowOptionsPanel(true);
-    
-    console.log("[handleComponentSelect] Set showOptionsPanel to true");
   };
 
   const handleSelectVariation = (variation: ScriptComponent) => {
@@ -681,8 +668,9 @@ const AiWriterPageContent = () => {
     }
   };
 
-  return (
-    <div className="flex flex-col w-full h-full">
+  // Create top content (voice profile + processing status)
+  const topContent = (
+    <div className="space-y-4">
       {/* Voice Profile Indicator */}
       {activeVoiceProfile && !isLoadingVoiceProfile && (
         <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
@@ -697,60 +685,62 @@ const AiWriterPageContent = () => {
       )}
 
       {/* Processing Status */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <ProcessingStatus />
       </div>
-
-      {/* Main Content - Resizable Panel Layout */}
-      <div className="flex-1">
-        <ResizablePanelGroup 
-          direction="horizontal" 
-          className="h-full"
-          key={`panel-group-${showOptionsPanel}`} // Force re-render when panel visibility changes
-        >
-          {/* Chat Interface Panel */}
-          <ResizablePanel 
-            defaultSize={showOptionsPanel ? 65 : 100} 
-            minSize={showOptionsPanel ? 40 : 50} 
-            maxSize={showOptionsPanel ? 85 : 100}
-            className="overflow-y-auto"
-          >
-            <div className="h-full overflow-y-auto">
-              <ChatInterface
-                onComponentSelect={handleComponentSelect}
-                selectedComponent={selectedComponent}
-                scriptOutline={scriptOutline}
-              />
-            </div>
-          </ResizablePanel>
-          
-          {/* Conditional Resizable Handle - Only render when needed */}
-          {showOptionsPanel && <ResizableHandle withHandle />}
-          
-          {/* Options Panel - Only render when needed */}
-          {showOptionsPanel && (
-            <ResizablePanel 
-              defaultSize={35} 
-              minSize={25} 
-              maxSize={60}
-              className="overflow-y-auto"
-              collapsible={true}
-            >
-              <div className="h-full">
-                <OptionsPanel
-                  selectedComponent={selectedComponent}
-                  variations={componentVariations}
-                  onSelectVariation={handleSelectVariation}
-                  onKeepOriginal={handleKeepOriginal}
-                  onClose={handleCloseOptions}
-                  isVisible={showOptionsPanel}
-                />
-              </div>
-            </ResizablePanel>
-          )}
-        </ResizablePanelGroup>
-      </div>
     </div>
+  );
+
+  // Configure panels
+  const panels = [
+    createPanel(
+      "chat",
+      <ChatInterface
+        onComponentSelect={handleComponentSelect}
+        selectedComponent={selectedComponent}
+        scriptOutline={scriptOutline}
+      />,
+      { 
+        default: showOptionsPanel ? 65 : 100, 
+        min: showOptionsPanel ? 40 : 50, 
+        max: showOptionsPanel ? 85 : 100 
+      },
+      { 
+        className: "p-4 md:p-6",
+        scrollable: true 
+      }
+    )
+  ];
+
+  // Add options panel if visible
+  if (showOptionsPanel) {
+    panels.push(
+      createPanel(
+        "options",
+        <OptionsPanel
+          selectedComponent={selectedComponent}
+          variations={componentVariations}
+          onSelectVariation={handleSelectVariation}
+          onKeepOriginal={handleKeepOriginal}
+          onClose={handleCloseOptions}
+          isVisible={showOptionsPanel}
+        />,
+        { default: 35, min: 25, max: 60 },
+        { 
+          collapsible: true,
+          scrollable: true 
+        }
+      )
+    );
+  }
+
+  return (
+    <ResizablePanelLayout
+      direction="horizontal"
+      panels={panels}
+      topContent={topContent}
+      key={`layout-${showOptionsPanel}`} // Force re-render when panel configuration changes
+    />
   );
 };
 
