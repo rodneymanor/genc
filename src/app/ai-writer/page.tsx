@@ -703,11 +703,15 @@ const AiWriterPageContent = () => {
 
       {/* Main Content - Resizable Panel Layout */}
       <div className="flex-1">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
+        <ResizablePanelGroup 
+          direction="horizontal" 
+          className="h-full"
+          key={`panel-group-${showOptionsPanel}`} // Force re-render when panel visibility changes
+        >
           {/* Chat Interface Panel */}
           <ResizablePanel 
             defaultSize={showOptionsPanel ? 65 : 100} 
-            minSize={showOptionsPanel ? 40 : 100} 
+            minSize={showOptionsPanel ? 40 : 50} 
             maxSize={showOptionsPanel ? 85 : 100}
             className="overflow-y-auto"
           >
@@ -720,28 +724,30 @@ const AiWriterPageContent = () => {
             </div>
           </ResizablePanel>
           
-          {/* Resizable Handle - Always present but hidden when not needed */}
-          <ResizableHandle withHandle className={showOptionsPanel ? "opacity-100" : "opacity-0 pointer-events-none"} />
+          {/* Conditional Resizable Handle - Only render when needed */}
+          {showOptionsPanel && <ResizableHandle withHandle />}
           
-          {/* Options Panel - Always present but collapsed when not needed */}
-          <ResizablePanel 
-            defaultSize={showOptionsPanel ? 35 : 0} 
-            minSize={showOptionsPanel ? 25 : 0} 
-            maxSize={showOptionsPanel ? 60 : 0}
-            className="overflow-y-auto"
-            collapsible={true}
-          >
-            <div className={cn("h-full", showOptionsPanel ? "opacity-100" : "opacity-0 pointer-events-none")}>
-              <OptionsPanel
-                selectedComponent={selectedComponent}
-                variations={componentVariations}
-                onSelectVariation={handleSelectVariation}
-                onKeepOriginal={handleKeepOriginal}
-                onClose={handleCloseOptions}
-                isVisible={showOptionsPanel}
-              />
-            </div>
-          </ResizablePanel>
+          {/* Options Panel - Only render when needed */}
+          {showOptionsPanel && (
+            <ResizablePanel 
+              defaultSize={35} 
+              minSize={25} 
+              maxSize={60}
+              className="overflow-y-auto"
+              collapsible={true}
+            >
+              <div className="h-full">
+                <OptionsPanel
+                  selectedComponent={selectedComponent}
+                  variations={componentVariations}
+                  onSelectVariation={handleSelectVariation}
+                  onKeepOriginal={handleKeepOriginal}
+                  onClose={handleCloseOptions}
+                  isVisible={showOptionsPanel}
+                />
+              </div>
+            </ResizablePanel>
+          )}
         </ResizablePanelGroup>
       </div>
     </div>
