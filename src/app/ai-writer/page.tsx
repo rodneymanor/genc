@@ -78,26 +78,34 @@ const ComponentCard: React.FC<{
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md",
-        config.color,
-        isSelected && config.selectedColor
+        "cursor-pointer transition-all duration-200 hover:shadow-lg border-2",
+        "bg-gray-800 border-gray-700 text-white rounded-xl",
+        isSelected && "ring-2 ring-blue-500 border-blue-500"
       )}
       onClick={() => onSelect(component)}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{config.emoji}</span>
-            <Badge variant="secondary" className="text-xs">
-              {config.label}
-            </Badge>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">
+              <span className="text-lg">{config.emoji}</span>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white text-sm">{config.label}</h4>
+              <p className="text-gray-400 text-xs">{config.description}</p>
+            </div>
           </div>
-          {isSelected && <CheckCircle className="w-4 h-4 text-green-600" />}
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs px-2 py-1">
+              Ready
+            </Badge>
+            {isSelected && <CheckCircle className="w-4 h-4 text-green-400" />}
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <h4 className="font-medium text-sm mb-1">{component.title}</h4>
-        <p className="text-xs text-muted-foreground line-clamp-2">{component.content}</p>
+        <div className="space-y-2">
+          <h5 className="font-medium text-white text-sm leading-tight">{component.title}</h5>
+          <p className="text-gray-300 text-xs leading-relaxed line-clamp-2">{component.content}</p>
+        </div>
       </CardContent>
     </Card>
   );
@@ -230,23 +238,23 @@ const ChatInterface: React.FC<{
         content: `Help me create a video script about: "${videoIdea}"`
       });
       
-      // Automatically add AI response with initial script components
+      // Automatically add AI response with specific, generated script components
       setTimeout(() => {
         append({
           role: "assistant",
-          content: `I'll help you create an engaging video script about "${videoIdea}". Here are four essential components to build your script:
+          content: `I've generated a complete script outline for "${videoIdea}". Here are your four key components:
 
-[HOOK] Attention-Grabbing Opening || Start with a compelling question, surprising fact, or bold statement that immediately captures your audience's attention and makes them want to keep watching.
+[HOOK] Did You Know This Changes Everything? || Did you know that ${videoIdea.toLowerCase()} could completely transform your approach? Most people get this wrong, but I'm about to show you the game-changing method that industry experts don't want you to know.
 
-[BRIDGE] Story or Transition || Connect your hook to your main content with a personal story, relatable scenario, or smooth transition that builds trust and keeps viewers engaged.
+[BRIDGE] Here's What I Discovered || Last month, I spent 30 days testing different approaches to ${videoIdea.toLowerCase()}, and what I found shocked me. The conventional wisdom? Completely backwards. Let me walk you through the breakthrough that changed my perspective forever.
 
-[GOLDENNUGGET] Key Insight or Value || Share your most valuable tip, insight, or piece of information - this is the core value that viewers came for and will remember most.
+[GOLDENNUGGET] The 3-Step Framework || Here's the exact 3-step framework that makes ${videoIdea.toLowerCase()} incredibly effective: First, identify the core problem everyone faces. Second, apply the counterintuitive solution that actually works. Third, implement the simple daily habit that ensures lasting results.
 
-[WTA] What to Action || End with a clear call-to-action telling viewers exactly what to do next, whether it's subscribing, visiting a link, or trying your advice.
+[WTA] Your Next Action Step || If this resonates with you, here's what I want you to do right now: comment below with your biggest challenge related to ${videoIdea.toLowerCase()}, and I'll personally respond with a customized tip. Don't forget to subscribe for more insights like this!
 
-Click on any component above to see alternative versions and customize it for your script!`
+✨ Click on any component above to customize it with alternative versions and fine-tune your script!`
         });
-      }, 1500); // Small delay to make it feel natural
+      }, 1500);
     }
   }, [videoIdea, scriptComponents, hasInitialized, messages.length, append]);
 
@@ -337,8 +345,8 @@ Click on any component above to see alternative versions and customize it for yo
       {/* Scrollable Messages Area */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
-          <div className="p-4 pb-20"> {/* Extra bottom padding to account for sticky input */}
-            <div className="space-y-4 max-w-2xl mx-auto">
+          <div className="p-4 pb-20 flex justify-center"> {/* Extra bottom padding to account for sticky input */}
+            <div className="space-y-4 max-w-3xl w-full">
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <div className={cn(
@@ -367,7 +375,7 @@ Click on any component above to see alternative versions and customize it for yo
                 >
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-lg px-4 py-2",
+                      "max-w-[90%] rounded-lg px-4 py-2",
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
@@ -384,7 +392,7 @@ Click on any component above to see alternative versions and customize it for yo
                         
                         {/* Render extracted components */}
                         {parseComponents(message.content).length > 0 && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                          <div className="space-y-3 mt-4">
                             {parseComponents(message.content).map((component) => (
                               <ComponentCard
                                 key={component.id}
@@ -406,7 +414,7 @@ Click on any component above to see alternative versions and customize it for yo
               {/* AI Thinking Indicator in Chat */}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[90%]">
                     <div className="flex items-center gap-2">
                       <div className="flex space-x-1">
                         <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -428,7 +436,7 @@ Click on any component above to see alternative versions and customize it for yo
       {/* Persistent AI Status Bar (above input) */}
       {aiStatus && (
         <div className="border-t bg-muted/50 px-4 py-2">
-          <div className="max-w-2xl mx-auto flex items-center gap-2">
+          <div className="max-w-3xl mx-auto flex items-center gap-2">
             <aiStatus.icon className={cn(
               "w-4 h-4 text-muted-foreground",
               aiStatus.animate && "animate-spin"
@@ -445,7 +453,7 @@ Click on any component above to see alternative versions and customize it for yo
 
       {/* Sticky Input at Bottom */}
       <div className="border-t bg-background p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2 max-w-2xl mx-auto">
+        <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
           <Input
             value={input}
             onChange={handleInputChange}
@@ -673,36 +681,29 @@ const AiWriterPageContent = () => {
         <ProcessingStatus />
       </div>
 
-      {/* Main Content - Centered Chat Layout */}
-      <div className="flex-1 flex justify-center">
-        <div className="w-full max-w-2xl">
-          {!showOptionsPanel ? (
-            // Single column chat layout
-            <ChatInterface
-              onComponentSelect={handleComponentSelect}
-              selectedComponent={selectedComponent}
-              scriptOutline={scriptOutline}
-            />
-          ) : (
-            // Two column layout with options panel
-            <ResizablePanelGroup direction="horizontal" className="h-full">
-              <ResizablePanel 
-                defaultSize={65} 
-                minSize={50} 
-                maxSize={80}
-                className="overflow-y-auto"
-              >
-                <div className="h-full overflow-y-auto">
-                  <ChatInterface
-                    onComponentSelect={handleComponentSelect}
-                    selectedComponent={selectedComponent}
-                    scriptOutline={scriptOutline}
-                  />
-                </div>
-              </ResizablePanel>
-              
+      {/* Main Content - Resizable Panel Layout */}
+      <div className="flex-1">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Chat Interface Panel */}
+          <ResizablePanel 
+            defaultSize={showOptionsPanel ? 65 : 100} 
+            minSize={50} 
+            maxSize={showOptionsPanel ? 80 : 100}
+            className="overflow-y-auto"
+          >
+            <div className="h-full overflow-y-auto">
+              <ChatInterface
+                onComponentSelect={handleComponentSelect}
+                selectedComponent={selectedComponent}
+                scriptOutline={scriptOutline}
+              />
+            </div>
+          </ResizablePanel>
+          
+          {/* Options Panel - Conditionally Rendered */}
+          {showOptionsPanel && (
+            <>
               <ResizableHandle withHandle />
-              
               <ResizablePanel 
                 defaultSize={35} 
                 minSize={20} 
@@ -720,9 +721,9 @@ const AiWriterPageContent = () => {
                   />
                 </div>
               </ResizablePanel>
-            </ResizablePanelGroup>
+            </>
           )}
-        </div>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
