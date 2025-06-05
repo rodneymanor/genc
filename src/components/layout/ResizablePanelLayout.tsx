@@ -32,6 +32,9 @@ export const ResizablePanelLayout: React.FC<ResizablePanelLayoutProps> = ({
     return <div className="h-full flex items-center justify-center text-muted-foreground">No panels configured</div>;
   }
 
+  // Create a stable key based on panel configuration to only re-render when panels actually change
+  const panelKey = panels.map(p => p.id).join('-');
+
   return (
     <div className={cn("h-full flex flex-col", className)}>
       {/* Top Content (non-scrolling, appears above panels) */}
@@ -46,6 +49,7 @@ export const ResizablePanelLayout: React.FC<ResizablePanelLayoutProps> = ({
         <ResizablePanelGroup 
           direction={direction} 
           className="h-full"
+          key={panelKey} // Only re-render when panel configuration actually changes
         >
           {panels.map((panel, index) => (
             <React.Fragment key={panel.id}>

@@ -232,12 +232,12 @@ const ChatInterface: React.FC<{
     researchAnalysis 
   } = useAiWriterContext();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitializedRef = useRef(false); // Use ref instead of state to persist across re-renders
 
   // Auto-start conversation when script components are ready
   useEffect(() => {
-    if (videoIdea && scriptComponents && !hasInitialized && messages.length === 0) {
-      setHasInitialized(true);
+    if (videoIdea && scriptComponents && !hasInitializedRef.current && messages.length === 0) {
+      hasInitializedRef.current = true;
       
       // Add user message
       append({
@@ -263,7 +263,7 @@ const ChatInterface: React.FC<{
         });
       }, 1500);
     }
-  }, [videoIdea, scriptComponents, hasInitialized, messages.length, append]);
+  }, [videoIdea, scriptComponents, messages.length, append]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -873,7 +873,6 @@ const AiWriterPageContent = () => {
       direction="horizontal"
       panels={panels}
       topContent={topContent}
-      key={`layout-${showOptionsPanel}`} // Force re-render when panel configuration changes
     />
   );
 };
