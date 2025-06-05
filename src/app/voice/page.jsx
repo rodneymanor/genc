@@ -303,8 +303,8 @@ const TikTokIcon = ({ className }) => (
   </svg>
 );
 
-// Voice Card Component
-const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive }) => {
+// Enhanced Voice Card Component with Linguistic Pattern Display
+const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive, onViewDetails }) => {
   const formatDate = (date) => {
     let dateObj;
     if (date && typeof date.toDate === 'function') {
@@ -334,6 +334,24 @@ const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive }) => {
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
+
+  // Extract linguistic preview data
+  const getLinguisticPreview = () => {
+    const voiceProfile = voice.voiceProfile;
+    if (!voiceProfile) return null;
+
+    return {
+      phrases: voiceProfile.linguisticAndDeliveryEssence?.signaturePhrasesAndIdiosyncrasies?.recurringTaglines?.slice(0, 2) || [],
+      tones: voiceProfile.coreIdentity?.dominantTones?.slice(0, 2) || [],
+      hooks: voiceProfile.contentStrategyBlueprints?.commonHookStrategies?.slice(0, 1) || [],
+      vocabulary: {
+        verbs: voiceProfile.linguisticAndDeliveryEssence?.keyVocabularyProfile?.characteristicVerbs?.slice(0, 3) || [],
+        adjectives: voiceProfile.linguisticAndDeliveryEssence?.keyVocabularyProfile?.characteristicAdjectivesAdverbs?.slice(0, 3) || []
+      }
+    };
+  };
+
+  const linguisticPreview = getLinguisticPreview();
 
   return (
     <Card className={`hover:shadow-md transition-all ${isActive ? 'ring-2 ring-primary' : ''}`}>
@@ -374,6 +392,9 @@ const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive }) => {
               </div>
               
               <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => onViewDetails(voice)} className="h-6 w-6 p-0">
+                  <Info className="h-3 w-3" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => onEdit(voice.id)} className="h-6 w-6 p-0">
                   <Edit className="h-3 w-3" />
                 </Button>
@@ -382,6 +403,35 @@ const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive }) => {
                 </Button>
               </div>
             </div>
+
+            {/* Linguistic Preview */}
+            {linguisticPreview && (
+              <div className="space-y-2 mb-3">
+                {/* Tone Preview */}
+                {linguisticPreview.tones.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {linguisticPreview.tones.map((tone, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">{tone}</Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Signature Phrases Preview */}
+                {linguisticPreview.phrases.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">Phrases:</span> &quot;{linguisticPreview.phrases[0]}&quot;
+                    {linguisticPreview.phrases.length > 1 && ' +more'}
+                  </div>
+                )}
+
+                {/* Vocabulary Preview */}
+                {(linguisticPreview.vocabulary.verbs.length > 0 || linguisticPreview.vocabulary.adjectives.length > 0) && (
+                  <div className="text-xs text-muted-foreground">
+                    <span className="font-medium">Style:</span> {[...linguisticPreview.vocabulary.verbs, ...linguisticPreview.vocabulary.adjectives].slice(0, 3).join(', ')}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -409,7 +459,7 @@ const VoiceCard = ({ voice, onActivate, onEdit, onDelete, isActive }) => {
 };
 
 // Voice Management Panel Component
-const VoiceManagementPanel = ({ voices, onCreateVoice, onActivateVoice, onEditVoice, onDeleteVoice, activeVoiceProfile }) => {
+const VoiceManagementPanel = ({ voices, onCreateVoice, onActivateVoice, onEditVoice, onDeleteVoice, activeVoiceProfile, onViewDetails }) => {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -445,6 +495,15 @@ const VoiceManagementPanel = ({ voices, onCreateVoice, onActivateVoice, onEditVo
                   {activeVoiceProfile.platform} • {activeVoiceProfile.analysisData?.videosAnalyzed || 0} videos analyzed
                 </p>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onViewDetails(activeVoiceProfile)}
+                className="ml-auto"
+              >
+                <Info className="w-3 h-3 mr-1" />
+                Details
+              </Button>
             </div>
             
             <div className="space-y-2">
@@ -484,6 +543,7 @@ const VoiceManagementPanel = ({ voices, onCreateVoice, onActivateVoice, onEditVo
               onEdit={onEditVoice}
               onDelete={onDeleteVoice}
               isActive={voice.isActive}
+              onViewDetails={onViewDetails}
             />
           ))
         )}
@@ -728,6 +788,414 @@ const VoiceCreationModal = ({
   );
 };
 
+// Detailed Voice Profile Modal Component
+const VoiceDetailsModal = ({ voice, isOpen, onClose }) => {
+  if (!isOpen || !voice) return null;
+
+  const voiceProfile = voice.voiceProfile;
+  const coreIdentity = voiceProfile?.coreIdentity || {};
+  const contentStrategy = voiceProfile?.contentStrategyBlueprints || {};
+  const linguistic = voiceProfile?.linguisticAndDeliveryEssence || {};
+  const actionable = voiceProfile?.actionableSystemPromptComponents || {};
+
+  return (
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-background rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground p-6 relative">
+          <button onClick={onClose} className="absolute top-4 right-4 text-primary-foreground hover:text-primary-foreground/80">
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <User className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-1">{voice.name}</h2>
+              <p className="text-primary-foreground/90 text-sm">
+                {voice.platform.charAt(0).toUpperCase() + voice.platform.slice(1)} • {voice.analysisData?.videosAnalyzed || 0} videos analyzed
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Content */}
+        <ScrollArea className="h-[calc(90vh-120px)] p-6">
+          <div className="space-y-6">
+            
+            {/* Core Identity Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="w-5 h-5 text-primary" />
+                  Voice Identity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Persona</Label>
+                  <p className="text-sm mt-1">{coreIdentity.suggestedPersonaName || 'Content Creator Voice'}</p>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Dominant Tones</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(coreIdentity.dominantTones || []).map((tone, index) => (
+                      <Badge key={index} variant="default" className="text-xs">{tone}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Secondary Tones</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(coreIdentity.secondaryTones || []).map((tone, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">{tone}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {coreIdentity.uniqueIdentifiersOrQuirks?.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Unique Characteristics</Label>
+                    <ul className="text-sm mt-2 space-y-1">
+                      {coreIdentity.uniqueIdentifiersOrQuirks.map((quirk, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Zap className="w-3 h-3 mt-1 text-primary flex-shrink-0" />
+                          <span>{quirk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {coreIdentity.toneExemplars?.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Tone Examples</Label>
+                    <div className="space-y-2 mt-2">
+                      {coreIdentity.toneExemplars.slice(0, 3).map((example, index) => (
+                        <div key={index} className="bg-muted p-3 rounded-md">
+                          <p className="text-sm italic">&quot;{example}&quot;</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Content Strategy Patterns */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Content Strategy Patterns
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                
+                {/* Hook Strategies */}
+                {contentStrategy.commonHookStrategies?.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium">Hook Strategies</Label>
+                    <div className="space-y-3 mt-2">
+                      {contentStrategy.commonHookStrategies.map((hook, index) => (
+                        <div key={index} className="border rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs">{hook.type}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{hook.template}</p>
+                          {hook.examples?.length > 0 && (
+                            <div className="space-y-1">
+                              {hook.examples.slice(0, 2).map((example, exIndex) => (
+                                <div key={exIndex} className="bg-muted/50 p-2 rounded text-xs">
+                                  &quot;{example}&quot;
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bridge Patterns */}
+                {contentStrategy.prevalentBridgePatterns && (
+                  <div>
+                    <Label className="text-sm font-medium">Bridge Patterns</Label>
+                    <div className="border rounded-lg p-3 mt-2">
+                      <p className="text-sm mb-2">{contentStrategy.prevalentBridgePatterns.description}</p>
+                      {contentStrategy.prevalentBridgePatterns.commonPhrasing?.length > 0 && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Common Phrases:</Label>
+                          {contentStrategy.prevalentBridgePatterns.commonPhrasing.map((phrase, index) => (
+                            <div key={index} className="bg-muted/50 p-2 rounded text-xs">
+                              &quot;{phrase}&quot;
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Golden Nugget Delivery */}
+                {contentStrategy.dominantGoldenNuggetDelivery && (
+                  <div>
+                    <Label className="text-sm font-medium">Golden Nugget Delivery</Label>
+                    <div className="border rounded-lg p-3 mt-2">
+                      {contentStrategy.dominantGoldenNuggetDelivery.patterns?.length > 0 && (
+                        <div className="mb-3">
+                          <Label className="text-xs">Delivery Patterns:</Label>
+                          <ul className="text-sm mt-1 space-y-1">
+                            {contentStrategy.dominantGoldenNuggetDelivery.patterns.map((pattern, index) => (
+                              <li key={index}>• {pattern}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {contentStrategy.dominantGoldenNuggetDelivery.structuralTemplates?.length > 0 && (
+                        <div>
+                          <Label className="text-xs">Structural Templates:</Label>
+                          <ul className="text-sm mt-1 space-y-1">
+                            {contentStrategy.dominantGoldenNuggetDelivery.structuralTemplates.map((template, index) => (
+                              <li key={index}>• {template}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* CTA Approaches */}
+                {contentStrategy.typicalCtaWtaApproaches && (
+                  <div>
+                    <Label className="text-sm font-medium">Call-to-Action Approaches</Label>
+                    <div className="border rounded-lg p-3 mt-2">
+                      {contentStrategy.typicalCtaWtaApproaches.commonTypes?.length > 0 && (
+                        <div className="mb-2">
+                          <Label className="text-xs">Common Types:</Label>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {contentStrategy.typicalCtaWtaApproaches.commonTypes.map((type, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">{type}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {contentStrategy.typicalCtaWtaApproaches.recurringPhrasingStyles?.length > 0 && (
+                        <div>
+                          <Label className="text-xs">Recurring Phrases:</Label>
+                          <div className="space-y-1 mt-1">
+                            {contentStrategy.typicalCtaWtaApproaches.recurringPhrasingStyles.map((phrase, index) => (
+                              <div key={index} className="bg-muted/50 p-2 rounded text-xs">
+                                &quot;{phrase}&quot;
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Linguistic Essence */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-primary" />
+                  Linguistic & Delivery Patterns
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                
+                {/* Sentence Structure */}
+                {linguistic.coreSentenceStructure && (
+                  <div>
+                    <Label className="text-sm font-medium">Sentence Structure</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="border rounded-lg p-3">
+                        <Label className="text-xs">Length Trend</Label>
+                        <p className="text-sm">{linguistic.coreSentenceStructure.lengthTrend || 'Mixed'}</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <Label className="text-xs">Complexity</Label>
+                        <p className="text-sm">{linguistic.coreSentenceStructure.complexity || 'Simple'}</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <Label className="text-xs">Dominant Types</Label>
+                        <p className="text-sm">{linguistic.coreSentenceStructure.dominantTypes || 'Declarative'}</p>
+                      </div>
+                      <div className="border rounded-lg p-3">
+                        <Label className="text-xs">Voice Preference</Label>
+                        <p className="text-sm">{linguistic.coreSentenceStructure.voicePreference || 'Active'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Vocabulary Profile */}
+                {linguistic.keyVocabularyProfile && (
+                  <div>
+                    <Label className="text-sm font-medium">Vocabulary Profile</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                      {linguistic.keyVocabularyProfile.characteristicNouns?.length > 0 && (
+                        <div className="border rounded-lg p-3">
+                          <Label className="text-xs">Characteristic Nouns</Label>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {linguistic.keyVocabularyProfile.characteristicNouns.slice(0, 6).map((noun, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">{noun}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {linguistic.keyVocabularyProfile.characteristicVerbs?.length > 0 && (
+                        <div className="border rounded-lg p-3">
+                          <Label className="text-xs">Characteristic Verbs</Label>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {linguistic.keyVocabularyProfile.characteristicVerbs.slice(0, 6).map((verb, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">{verb}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {linguistic.keyVocabularyProfile.characteristicAdjectivesAdverbs?.length > 0 && (
+                        <div className="border rounded-lg p-3">
+                          <Label className="text-xs">Descriptive Words</Label>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {linguistic.keyVocabularyProfile.characteristicAdjectivesAdverbs.slice(0, 6).map((word, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">{word}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {linguistic.keyVocabularyProfile.commonSlangOrJargon?.terms?.length > 0 && (
+                        <div className="border rounded-lg p-3">
+                          <Label className="text-xs">Slang & Jargon</Label>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {linguistic.keyVocabularyProfile.commonSlangOrJargon.terms.slice(0, 6).map((term, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">{term}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Signature Phrases */}
+                {linguistic.signaturePhrasesAndIdiosyncrasies && (
+                  <div>
+                    <Label className="text-sm font-medium">Signature Phrases & Idiosyncrasies</Label>
+                    <div className="space-y-3 mt-2">
+                      {linguistic.signaturePhrasesAndIdiosyncrasies.recurringTaglines?.length > 0 && (
+                        <div>
+                          <Label className="text-xs">Recurring Taglines</Label>
+                          <div className="space-y-1 mt-1">
+                            {linguistic.signaturePhrasesAndIdiosyncrasies.recurringTaglines.map((tagline, index) => (
+                              <div key={index} className="bg-muted p-2 rounded text-sm">
+                                &quot;{tagline}&quot;
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {linguistic.signaturePhrasesAndIdiosyncrasies.uniqueExclamationsOrInterjections?.length > 0 && (
+                        <div>
+                          <Label className="text-xs">Unique Expressions</Label>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {linguistic.signaturePhrasesAndIdiosyncrasies.uniqueExclamationsOrInterjections.map((expression, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">{expression}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {linguistic.signaturePhrasesAndIdiosyncrasies.audienceAddressingHabits?.length > 0 && (
+                        <div>
+                          <Label className="text-xs">Audience Addressing</Label>
+                          <div className="space-y-1 mt-1">
+                            {linguistic.signaturePhrasesAndIdiosyncrasies.audienceAddressingHabits.map((habit, index) => (
+                              <div key={index} className="bg-muted/50 p-2 rounded text-xs">
+                                {habit}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Voice DNA Directives */}
+            {actionable.voiceDnaSummaryDirectives?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-primary" />
+                    Voice DNA for Script Generation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {actionable.voiceDnaSummaryDirectives.map((directive, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-xs font-medium text-primary">{index + 1}</span>
+                        </div>
+                        <p className="text-sm">{directive.replace(/\*\*/g, '')}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Constraints */}
+            {actionable.consolidatedNegativeConstraints && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <X className="w-5 h-5 text-destructive" />
+                    Content Constraints
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {actionable.consolidatedNegativeConstraints.wordsToAvoid?.length > 0 && (
+                    <div>
+                      <Label className="text-xs">Words to Avoid</Label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {actionable.consolidatedNegativeConstraints.wordsToAvoid.map((word, index) => (
+                          <Badge key={index} variant="destructive" className="text-xs">{word}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {actionable.consolidatedNegativeConstraints.tonesToAvoid?.length > 0 && (
+                    <div>
+                      <Label className="text-xs">Tones to Avoid</Label>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {actionable.consolidatedNegativeConstraints.tonesToAvoid.map((tone, index) => (
+                          <Badge key={index} variant="destructive" className="text-xs">{tone}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+};
+
 const VoicePage = () => {
   const [activeVoice, setActiveVoice] = useState(null);
   const [activeTab, setActiveTab] = useState("custom");
@@ -740,6 +1208,10 @@ const VoicePage = () => {
   const [processingStep, setProcessingStep] = useState(0);
   const [analysisResults, setAnalysisResults] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Voice Details Modal State
+  const [showVoiceDetails, setShowVoiceDetails] = useState(false);
+  const [selectedVoiceForDetails, setSelectedVoiceForDetails] = useState(null);
   
   // Voice Engine Configuration State
   const [voiceInfluenceSettings, setVoiceInfluenceSettings] = useState({
@@ -1017,6 +1489,17 @@ const VoicePage = () => {
     }
   };
 
+  // Voice Details Handler
+  const handleViewVoiceDetails = (voice) => {
+    setSelectedVoiceForDetails(voice);
+    setShowVoiceDetails(true);
+  };
+
+  const handleCloseVoiceDetails = () => {
+    setShowVoiceDetails(false);
+    setSelectedVoiceForDetails(null);
+  };
+
   // Platform options for voice creation
   const platforms = [
     { id: 'instagram', name: 'Instagram', icon: InstagramIcon, description: 'Clone voice from Instagram Reels' },
@@ -1046,6 +1529,7 @@ const VoicePage = () => {
         onEditVoice={handleEditVoice}
         onDeleteVoice={handleDeleteVoice}
         activeVoiceProfile={activeVoiceProfile}
+        onViewDetails={handleViewVoiceDetails}
       />,
       { default: 35, min: 25, max: 50 },
       { scrollable: true }
@@ -1117,6 +1601,13 @@ const VoicePage = () => {
           onConfirmVoiceCreation={handleConfirmVoiceCreation}
         />
       )}
+
+      {/* Voice Details Modal */}
+      <VoiceDetailsModal 
+        voice={selectedVoiceForDetails}
+        isOpen={showVoiceDetails}
+        onClose={handleCloseVoiceDetails}
+      />
     </div>
   );
 };

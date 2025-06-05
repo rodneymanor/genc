@@ -432,6 +432,114 @@ VOICE IDENTITY TO APPLY:
 * Tone Examples: ${identity.toneExemplars?.slice(0, 3).map((ex: string) => `"${ex}"`).join(', ') || 'Engaging and authentic expressions'}`;
     }
 
+    // Add detailed linguistic patterns
+    if (voiceProfile.voiceProfile?.linguisticAndDeliveryEssence) {
+      const linguistic = voiceProfile.voiceProfile.linguisticAndDeliveryEssence;
+      
+      enhancedPrompt += `
+
+LINGUISTIC PATTERNS TO IMPLEMENT:`;
+
+      // Sentence structure patterns
+      if (linguistic.coreSentenceStructure) {
+        enhancedPrompt += `
+* Sentence Length: Prefer ${linguistic.coreSentenceStructure.lengthTrend || 'mixed'} sentences
+* Sentence Types: Use predominantly ${linguistic.coreSentenceStructure.dominantTypes || 'declarative'} structures
+* Complexity Level: Maintain ${linguistic.coreSentenceStructure.complexity || 'simple'} complexity
+* Voice: Use ${linguistic.coreSentenceStructure.voicePreference || 'active'} voice predominantly`;
+      }
+
+      // Vocabulary patterns
+      if (linguistic.keyVocabularyProfile) {
+        const vocab = linguistic.keyVocabularyProfile;
+        if (vocab.characteristicVerbs?.length) {
+          enhancedPrompt += `
+* Preferred Verbs: ${vocab.characteristicVerbs.slice(0, 8).join(', ')}`;
+        }
+        if (vocab.characteristicAdjectivesAdverbs?.length) {
+          enhancedPrompt += `
+* Characteristic Descriptors: ${vocab.characteristicAdjectivesAdverbs.slice(0, 8).join(', ')}`;
+        }
+        if (vocab.commonSlangOrJargon?.terms?.length) {
+          enhancedPrompt += `
+* Domain-Specific Terms: ${vocab.commonSlangOrJargon.terms.slice(0, 6).join(', ')}`;
+        }
+      }
+
+      // Signature phrases and expressions
+      if (linguistic.signaturePhrasesAndIdiosyncrasies) {
+        const phrases = linguistic.signaturePhrasesAndIdiosyncrasies;
+        if (phrases.recurringTaglines?.length) {
+          enhancedPrompt += `
+* Signature Phrases: ${phrases.recurringTaglines.slice(0, 4).map((phrase: string) => `"${phrase}"`).join(', ')}`;
+        }
+        if (phrases.uniqueExclamationsOrInterjections?.length) {
+          enhancedPrompt += `
+* Unique Expressions: ${phrases.uniqueExclamationsOrInterjections.slice(0, 4).join(', ')}`;
+        }
+        if (phrases.audienceAddressingHabits?.length) {
+          enhancedPrompt += `
+* Audience Addressing Style: ${phrases.audienceAddressingHabits.slice(0, 3).join(', ')}`;
+        }
+      }
+    }
+
+    // Add content strategy blueprints
+    if (voiceProfile.voiceProfile?.contentStrategyBlueprints) {
+      const strategy = voiceProfile.voiceProfile.contentStrategyBlueprints;
+      
+      enhancedPrompt += `
+
+CONTENT STRATEGY PATTERNS TO FOLLOW:`;
+
+      // Hook strategies
+      if (strategy.commonHookStrategies?.length && voiceInfluenceSettings.hooks) {
+        enhancedPrompt += `
+* Hook Strategy Patterns:`;
+        strategy.commonHookStrategies.slice(0, 3).forEach((hook: any, index: number) => {
+          enhancedPrompt += `
+  ${index + 1}. ${hook.type}: ${hook.template}`;
+          if (hook.examples?.length) {
+            enhancedPrompt += ` (e.g., "${hook.examples[0]}")`;
+          }
+        });
+      }
+
+      // Bridge patterns
+      if (strategy.prevalentBridgePatterns && voiceInfluenceSettings.bridges) {
+        enhancedPrompt += `
+* Bridge Transition Style: ${strategy.prevalentBridgePatterns.description}`;
+        if (strategy.prevalentBridgePatterns.commonPhrasing?.length) {
+          enhancedPrompt += `
+* Common Bridge Phrases: ${strategy.prevalentBridgePatterns.commonPhrasing.slice(0, 3).map((phrase: string) => `"${phrase}"`).join(', ')}`;
+        }
+      }
+
+      // Golden nugget delivery
+      if (strategy.dominantGoldenNuggetDelivery && voiceInfluenceSettings.goldenNuggets) {
+        if (strategy.dominantGoldenNuggetDelivery.patterns?.length) {
+          enhancedPrompt += `
+* Value Delivery Patterns: ${strategy.dominantGoldenNuggetDelivery.patterns.slice(0, 3).join(', ')}`;
+        }
+        if (strategy.dominantGoldenNuggetDelivery.structuralTemplates?.length) {
+          enhancedPrompt += `
+* Structural Templates: ${strategy.dominantGoldenNuggetDelivery.structuralTemplates.slice(0, 3).join(', ')}`;
+        }
+      }
+
+      // CTA approaches
+      if (strategy.typicalCtaWtaApproaches && voiceInfluenceSettings.wtas) {
+        if (strategy.typicalCtaWtaApproaches.commonTypes?.length) {
+          enhancedPrompt += `
+* CTA Types: ${strategy.typicalCtaWtaApproaches.commonTypes.slice(0, 3).join(', ')}`;
+        }
+        if (strategy.typicalCtaWtaApproaches.recurringPhrasingStyles?.length) {
+          enhancedPrompt += `
+* CTA Phrasing Styles: ${strategy.typicalCtaWtaApproaches.recurringPhrasingStyles.slice(0, 3).map((phrase: string) => `"${phrase}"`).join(', ')}`;
+        }
+      }
+    }
+
     // Add voice DNA directives if available
     if (voiceProfile.voiceProfile?.actionableSystemPromptComponents?.voiceDnaSummaryDirectives) {
       enhancedPrompt += `
@@ -449,32 +557,32 @@ COMPONENT-SPECIFIC VOICE APPLICATION:`;
 
     if (voiceInfluenceSettings.hooks) {
       enhancedPrompt += `
-* HOOKS: Apply the voice's hook strategies and opening style. Use their typical question patterns, bold statement approaches, and opening energy level.`;
+* HOOKS: Apply the voice's hook strategies, opening style, question patterns, and energy level. Use their characteristic vocabulary and signature expressions in hook creation.`;
     }
 
     if (voiceInfluenceSettings.bridges) {
       enhancedPrompt += `
-* BRIDGES: Apply the voice's transition style and audience connection methods. Use their typical empathy phrases and rapport-building language.`;
+* BRIDGES: Apply the voice's transition style, empathy phrases, and audience connection methods. Use their typical bridge phrasing and rapport-building language.`;
     }
 
     if (voiceInfluenceSettings.goldenNuggets) {
       enhancedPrompt += `
-* GOLDEN NUGGETS: Apply the voice's content delivery patterns and value presentation style. Use their structural templates and insight delivery methods.`;
+* GOLDEN NUGGETS: Apply the voice's content delivery patterns, value presentation style, structural templates, and insight delivery methods.`;
     }
 
     if (voiceInfluenceSettings.wtas) {
       enhancedPrompt += `
-* CTAs/WTAs: Apply the voice's call-to-action style and urgency creation methods. Use their typical action phrases and motivational language.`;
+* CTAs/WTAs: Apply the voice's call-to-action style, urgency creation methods, typical action phrases, and motivational language.`;
     }
 
     if (voiceInfluenceSettings.languagePatterns) {
       enhancedPrompt += `
-* LANGUAGE PATTERNS: Apply the voice's sentence structure preferences, complexity level, vocabulary choices, and grammatical patterns throughout ALL components.`;
+* LANGUAGE PATTERNS: Apply the voice's sentence structure preferences, complexity level, vocabulary choices, grammatical patterns, and signature phrases throughout ALL components.`;
     }
 
     if (voiceInfluenceSettings.toneApplication) {
       enhancedPrompt += `
-* TONE APPLICATION: Apply the voice's tonal characteristics, energy levels, and emotional expression patterns throughout ALL components.`;
+* TONE APPLICATION: Apply the voice's tonal characteristics, energy levels, emotional expression patterns, and unique exclamations throughout ALL components.`;
     }
 
     // Add negative constraints if available
@@ -515,13 +623,13 @@ Template: ${hook.template}${hook.example ? `
 Example: "${hook.example}"` : ''}
 `).join('')}
 
-INTEGRATION RULE: When generating hooks, adapt these custom structures to fit the current video idea and research content. Maintain the structural pattern while customizing the content.`;
+INTEGRATION RULE: When generating hooks, adapt these custom structures to fit the current video idea and research content. Maintain the structural pattern while customizing the content. Combine with voice characteristics when both are enabled.`;
   }
 
   if (activeInfluences.length > 0 || activeCustomHooks.length > 0) {
     enhancedPrompt += `
 
-IMPORTANT: These voice characteristics and custom structures should enhance and guide your generation while still adhering to all base requirements and producing high-quality, engaging content. Balance voice authenticity with effectiveness.`;
+IMPORTANT: These voice characteristics, linguistic patterns, and custom structures should enhance and guide your generation while still adhering to all base requirements and producing high-quality, engaging content. Balance voice authenticity with effectiveness.`;
   }
 
   return enhancedPrompt;
