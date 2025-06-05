@@ -223,10 +223,30 @@ const ChatInterface: React.FC<{
   useEffect(() => {
     if (videoIdea && scriptComponents && !hasInitialized && messages.length === 0) {
       setHasInitialized(true);
+      
+      // Add user message
       append({
         role: "user",
         content: `Help me create a video script about: "${videoIdea}"`
       });
+      
+      // Automatically add AI response with initial script components
+      setTimeout(() => {
+        append({
+          role: "assistant",
+          content: `I'll help you create an engaging video script about "${videoIdea}". Here are four essential components to build your script:
+
+[HOOK] Attention-Grabbing Opening || Start with a compelling question, surprising fact, or bold statement that immediately captures your audience's attention and makes them want to keep watching.
+
+[BRIDGE] Story or Transition || Connect your hook to your main content with a personal story, relatable scenario, or smooth transition that builds trust and keeps viewers engaged.
+
+[GOLDENNUGGET] Key Insight or Value || Share your most valuable tip, insight, or piece of information - this is the core value that viewers came for and will remember most.
+
+[WTA] What to Action || End with a clear call-to-action telling viewers exactly what to do next, whether it's subscribing, visiting a link, or trying your advice.
+
+Click on any component above to see alternative versions and customize it for your script!`
+        });
+      }, 1500); // Small delay to make it feel natural
     }
   }, [videoIdea, scriptComponents, hasInitialized, messages.length, append]);
 
