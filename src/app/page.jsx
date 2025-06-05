@@ -40,6 +40,8 @@ import AudioRecordingColumn from "@/components/features/AudioRecordingColumn";
 import { useTopBar } from "@/components/layout/TopBarProvider";
 import { useTwitterVideoIdeas } from "@/hooks/useTwitterVideoIdeas";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useAppContext } from "@/contexts/AppContext";
+import ResizablePanelLayout, { usePanelConfig } from "@/components/layout/ResizablePanelLayout";
 
 // Helper function to extract hostname
 const getHostname = (url) => {
@@ -350,6 +352,7 @@ const AiWriterPageContent = () => {
   const [showRecordingColumn, setShowRecordingColumn] = useState(false);
   const [localVideoIdea, setLocalVideoIdea] = useState("");
   const { setRecordButton, setCollapseButton } = useTopBar();
+  const { createPanel } = usePanelConfig();
 
   // Handle record button click to show recording column
   const handleRecordClick = () => {
@@ -371,7 +374,7 @@ const AiWriterPageContent = () => {
     // Show record button only when recording column is NOT visible
     if (!showRecordingColumn) {
       setRecordButton(
-                      <Button 
+        <Button 
           variant="ghost" 
           size="sm" 
           onClick={handleRecordClick}
@@ -379,16 +382,16 @@ const AiWriterPageContent = () => {
         >
           <Mic className="w-4 h-4 mr-1" />
           Record
-                      </Button>
+        </Button>
       );
     } else {
       setRecordButton(null);
     }
-                      
+    
     // Show collapse button only when recording column is visible
     if (showRecordingColumn) {
       setCollapseButton(
-                      <Button 
+        <Button 
           variant="ghost" 
           size="sm" 
           onClick={handleCollapseClick}
@@ -396,7 +399,7 @@ const AiWriterPageContent = () => {
         >
           <ChevronRight className="w-4 h-4 mr-1" />
           Collapse
-                      </Button>
+        </Button>
       );
     } else {
       setCollapseButton(null);
@@ -409,56 +412,57 @@ const AiWriterPageContent = () => {
     };
   }, [showRecordingColumn, setRecordButton, setCollapseButton]);
 
+  // Configure panels
+  const panels = [
+    createPanel(
+      "main",
+      <MainColumn localVideoIdea={localVideoIdea} setLocalVideoIdea={setLocalVideoIdea} />,
+      { 
+        default: showRecordingColumn ? 45 : 65, 
+        min: 35, 
+        max: showRecordingColumn ? 60 : 75 
+      },
+      { 
+        className: "p-4 md:p-6",
+        scrollable: true 
+      }
+    ),
+    createPanel(
+      "side",
+      <SideColumn onVideoIdeaSelect={handleVideoIdeaSelect} />,
+      { 
+        default: showRecordingColumn ? 30 : 35, 
+        min: 20, 
+        max: 45 
+      },
+      { 
+        scrollable: true 
+      }
+    )
+  ];
+
+  // Add recording column if visible
+  if (showRecordingColumn) {
+    panels.push(
+      createPanel(
+        "recording",
+        <AudioRecordingColumn />,
+        { default: 25, min: 20, max: 35 },
+        { 
+          scrollable: true 
+        }
+      )
+    );
+  }
+
   return (
-    <>
-      <div className="h-full w-full">
-        {/* Main Layout with Resizable Panels */}
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Main Content Panel */}
-          <ResizablePanel 
-            defaultSize={showRecordingColumn ? 45 : 65} 
-            minSize={35}
-            maxSize={showRecordingColumn ? 60 : 75}
-          >
-            <div className="h-full p-4 md:p-6">
-              <MainColumn localVideoIdea={localVideoIdea} setLocalVideoIdea={setLocalVideoIdea} />
-            </div>
-          </ResizablePanel>
-
-          {/* Resizable Handle */}
-          <ResizableHandle withHandle />
-
-          {/* Side Panel (Video Ideas) */}
-          <ResizablePanel 
-            defaultSize={showRecordingColumn ? 30 : 35} 
-            minSize={20} 
-            maxSize={45}
-            className="overflow-y-auto"
-          >
-            <div className="h-full overflow-y-auto">
-              <SideColumn onVideoIdeaSelect={handleVideoIdeaSelect} />
-            </div>
-          </ResizablePanel>
-
-          {/* Recording Column - Conditionally Rendered */}
-          {showRecordingColumn && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel 
-                defaultSize={25} 
-                minSize={20} 
-                maxSize={35}
-                className="overflow-y-auto"
-              >
-                <div className="h-full overflow-y-auto">
-                  <AudioRecordingColumn />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </div>
-    </>
+    <div className="h-full w-full">
+      <ResizablePanelLayout
+        direction="horizontal"
+        panels={panels}
+        key={`layout-${showRecordingColumn}`} // Force re-render when recording column changes
+      />
+    </div>
   );
 };
 
