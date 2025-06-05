@@ -348,137 +348,145 @@ const ChatInterface: React.FC<{
   const aiStatus = getCurrentAIStatus();
 
   return (
-    <div className="h-full flex flex-col bg-background relative">
-      {/* Messages Area - Let panel handle scrolling */}
-      <div className="flex-1 min-h-0 flex justify-center">
-        <div className="space-y-4 max-w-3xl w-full py-4">
-          {messages.length === 0 && (
-            <div className="text-center py-8">
-              <div className={cn(
-                "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
-                isProcessing ? "bg-primary/10" : "bg-primary/10"
-              )}>
-                <EmptyIcon className={cn(
-                  "w-8 h-8",
-                  isProcessing ? "text-primary animate-pulse" : "text-primary"
-                )} />
+    <div className="h-full flex flex-col bg-background">
+      {/* Scrollable Messages Area */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex justify-center p-4">
+          <div className="space-y-4 max-w-3xl w-full">
+            {messages.length === 0 && (
+              <div className="text-center py-8">
+                <div className={cn(
+                  "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+                  isProcessing ? "bg-primary/10" : "bg-primary/10"
+                )}>
+                  <EmptyIcon className={cn(
+                    "w-8 h-8",
+                    isProcessing ? "text-primary animate-pulse" : "text-primary"
+                  )} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{emptyState.title}</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {emptyState.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold mb-2">{emptyState.title}</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                {emptyState.description}
-              </p>
-            </div>
-          )}
+            )}
 
-          {messages.map((message: Message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "flex w-full",
-                message.role === "user" ? "justify-end" : "justify-start"
-              )}
-            >
+            {messages.map((message: Message) => (
               <div
+                key={message.id}
                 className={cn(
-                  "max-w-[90%] rounded-lg px-4 py-2",
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                  "flex w-full",
+                  message.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
-                {message.role === "assistant" ? (
-                  <div className="space-y-3">
-                    <div className="prose prose-sm max-w-none">
-                      {/* Render the text content, excluding component markers */}
-                      <p className="text-sm leading-relaxed">
-                        {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
-                      </p>
-                    </div>
-                    
-                    {/* Render extracted components */}
-                    {parseComponents(message.content).length > 0 && (
-                      <div className="space-y-3 mt-4 w-full max-w-none">
-                        {parseComponents(message.content).map((component) => (
-                          <div key={component.id} className="w-full">
-                            <ComponentCard
-                              component={component}
-                              onSelect={onComponentSelect}
-                              isSelected={selectedComponent?.id === component.id}
-                            />
-                          </div>
-                        ))}
+                <div
+                  className={cn(
+                    "max-w-[90%] rounded-lg px-4 py-2",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
+                  )}
+                >
+                  {message.role === "assistant" ? (
+                    <div className="space-y-3">
+                      <div className="prose prose-sm max-w-none">
+                        {/* Render the text content, excluding component markers */}
+                        <p className="text-sm leading-relaxed">
+                          {message.content.replace(/\[(HOOK|BRIDGE|GOLDENNUGGET|WTA)\].*?\|\|.*?(?=\[|$)/gs, '').trim()}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm">{message.content}</p>
-                )}
-              </div>
-            </div>
-          ))}
-          
-          {/* AI Thinking Indicator in Chat */}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-muted rounded-lg px-4 py-2 max-w-[90%]">
-                <div className="flex items-center gap-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">AI is thinking...</span>
+                      
+                      {/* Render extracted components */}
+                      {parseComponents(message.content).length > 0 && (
+                        <div className="space-y-3 mt-4 w-full max-w-none">
+                          {parseComponents(message.content).map((component) => (
+                            <div key={component.id} className="w-full">
+                              <ComponentCard
+                                component={component}
+                                onSelect={onComponentSelect}
+                                isSelected={selectedComponent?.id === component.id}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm">{message.content}</p>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
+            ))}
+            
+            {/* AI Thinking Indicator in Chat */}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg px-4 py-2 max-w-[90%]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">AI is thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+            
+            {/* Extra bottom padding to ensure last message isn't hidden behind the sticky input */}
+            <div className="h-32"></div>
+          </div>
         </div>
       </div>
 
-      {/* Persistent AI Status Bar (above input) */}
-      {aiStatus && (
-        <div className="border-t bg-muted/50 px-4 py-2 flex-shrink-0">
-          <div className="max-w-3xl mx-auto flex items-center gap-2">
-            <aiStatus.icon className={cn(
-              "w-4 h-4 text-muted-foreground",
-              aiStatus.animate && "animate-spin"
-            )} />
-            <span className="text-xs text-muted-foreground">{aiStatus.text}</span>
-            {sources.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto">
-                {sources.length} sources ready
-              </Badge>
-            )}
+      {/* Sticky Bottom Section - Fixed at bottom */}
+      <div className="flex-shrink-0 border-t bg-background">
+        {/* Persistent AI Status Bar (above input) */}
+        {aiStatus && (
+          <div className="bg-muted/50 px-4 py-2">
+            <div className="max-w-3xl mx-auto flex items-center gap-2">
+              <aiStatus.icon className={cn(
+                "w-4 h-4 text-muted-foreground",
+                aiStatus.animate && "animate-spin"
+              )} />
+              <span className="text-xs text-muted-foreground">{aiStatus.text}</span>
+              {sources.length > 0 && (
+                <Badge variant="secondary" className="text-xs ml-auto">
+                  {sources.length} sources ready
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Sticky Input at Bottom */}
-      <div className="border-t bg-background p-4 flex-shrink-0">
-        <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
-          <Input
-            value={input}
-            onChange={handleInputChange}
-            placeholder={
-              isProcessing 
-                ? "Please wait while I prepare your research..." 
-                : isLoading
-                ? "AI is responding..."
-                : "Ask for script help or request changes..."
-            }
-            disabled={isLoading || isProcessing}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={isLoading || !input.trim() || isProcessing}>
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </form>
+        {/* Input Form */}
+        <div className="p-4">
+          <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
+            <Input
+              value={input}
+              onChange={handleInputChange}
+              placeholder={
+                isProcessing 
+                  ? "Please wait while I prepare your research..." 
+                  : isLoading
+                  ? "AI is responding..."
+                  : "Ask for script help or request changes..."
+              }
+              disabled={isLoading || isProcessing}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim() || isProcessing}>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -833,8 +841,7 @@ const AiWriterPageContent = () => {
         max: showOptionsPanel ? 85 : 100 
       },
       { 
-        className: "p-4 md:p-6",
-        scrollable: true 
+        scrollable: false // Disable panel scrolling - ChatInterface handles its own scrolling
       }
     )
   ];
