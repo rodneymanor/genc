@@ -612,21 +612,148 @@ const AiWriterPageContent = () => {
     }
   }, [videoIdea, setVideoIdea]);
 
-  // Mock variations generator (in real app, this could call an API)
+  // Generate meaningful variations based on component type and content
   const generateVariations = (component: ScriptComponent): ScriptComponent[] => {
     const variations: ScriptComponent[] = [];
+    const baseId = `${component.type}-${Date.now()}`;
     
-    for (let i = 1; i <= 3; i++) {
-      variations.push({
-        id: `${component.type}-variation-${i}-${Date.now()}`,
-        type: component.type,
-        title: `${component.title} (Option ${i})`,
-        content: `Alternative version ${i}: ${component.content}`,
-        emoji: component.emoji,
-      });
+    // Extract key themes from the original content to create contextual variations
+    const originalContent = component.content.toLowerCase();
+    
+    switch (component.type) {
+      case "hook":
+        variations.push(
+          {
+            id: `${baseId}-question`,
+            type: component.type,
+            title: "What if I told you...",
+            content: `What if I told you that everything you know about ${getTopicFromContent(originalContent)} is wrong? In the next few minutes, I'm going to reveal the shocking truth that industry experts don't want you to discover.`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-story`,
+            type: component.type,
+            title: "The Story Hook",
+            content: `Three months ago, I was just like you - struggling with ${getTopicFromContent(originalContent)}. Then I discovered this one simple trick that changed everything. Here's my story...`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-statistic`,
+            type: component.type,
+            title: "The Shocking Statistic",
+            content: `95% of people get ${getTopicFromContent(originalContent)} completely wrong. But the 5% who understand this secret principle are seeing incredible results. Which group do you want to be in?`,
+            emoji: component.emoji,
+          }
+        );
+        break;
+        
+      case "bridge":
+        variations.push(
+          {
+            id: `${baseId}-personal`,
+            type: component.type,
+            title: "Personal Discovery",
+            content: `I used to struggle with this exact problem. After trying everything and failing repeatedly, I finally discovered the missing piece that made all the difference. Let me share what I learned...`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-research`,
+            type: component.type,
+            title: "Research-Based Transition",
+            content: `Recent studies from leading experts have revealed something fascinating about ${getTopicFromContent(originalContent)}. The research shows that most people are approaching this completely backwards...`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-contrast`,
+            type: component.type,
+            title: "Before vs After",
+            content: `There's a clear difference between people who succeed with ${getTopicFromContent(originalContent)} and those who don't. It all comes down to one critical distinction that I'm about to reveal...`,
+            emoji: component.emoji,
+          }
+        );
+        break;
+        
+      case "goldenNugget":
+        variations.push(
+          {
+            id: `${baseId}-framework`,
+            type: component.type,
+            title: "The SIMPLE Framework",
+            content: `Here's the SIMPLE framework that changes everything: Start with clarity, Identify the core issue, Measure your progress, Plan your approach, Learn from feedback, and Execute consistently. This system works every time.`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-secret`,
+            type: component.type,
+            title: "The Industry Secret",
+            content: `Here's what the experts won't tell you about ${getTopicFromContent(originalContent)}: The secret isn't doing more - it's doing less, but doing it with laser focus on these three critical elements...`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-mistake`,
+            type: component.type,
+            title: "The Common Mistake",
+            content: `The biggest mistake people make with ${getTopicFromContent(originalContent)} is thinking they need complex solutions. The truth is, the most powerful approach is surprisingly simple. Here's exactly what to do instead...`,
+            emoji: component.emoji,
+          }
+        );
+        break;
+        
+      case "wta":
+        variations.push(
+          {
+            id: `${baseId}-immediate`,
+            type: component.type,
+            title: "Take Action Right Now",
+            content: `Don't wait another day to start seeing results. Take out your phone right now and do this one simple thing that will kickstart your journey with ${getTopicFromContent(originalContent)}. I'll wait while you do it...`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-community`,
+            type: component.type,
+            title: "Join the Community",
+            content: `Ready to master ${getTopicFromContent(originalContent)}? Join our community of like-minded achievers. Drop a comment below with your biggest challenge, and I'll personally help you create a custom action plan.`,
+            emoji: component.emoji,
+          },
+          {
+            id: `${baseId}-challenge`,
+            type: component.type,
+            title: "7-Day Challenge",
+            content: `I challenge you to try this for just 7 days. Apply what you've learned about ${getTopicFromContent(originalContent)} and watch what happens. Share your results in the comments - I read every single one!`,
+            emoji: component.emoji,
+          }
+        );
+        break;
+        
+      default:
+        // Fallback for unknown types
+        variations.push(
+          {
+            id: `${baseId}-alt1`,
+            type: component.type,
+            title: `${component.title} - Alternative Approach`,
+            content: `Here's a different angle on the same concept: ${component.content.replace(/^.{0,20}/, "Instead of the usual approach,")}`,
+            emoji: component.emoji,
+          }
+        );
     }
     
     return variations;
+  };
+
+  // Helper function to extract topic from content for more contextual variations
+  const getTopicFromContent = (content: string): string => {
+    // Simple extraction - look for key phrases or use a generic term
+    if (content.includes('video') || content.includes('content')) return 'content creation';
+    if (content.includes('business') || content.includes('entrepreneur')) return 'business growth';
+    if (content.includes('productivity') || content.includes('time')) return 'productivity';
+    if (content.includes('health') || content.includes('fitness')) return 'health and wellness';
+    if (content.includes('money') || content.includes('finance')) return 'financial success';
+    if (content.includes('relationship') || content.includes('social')) return 'relationships';
+    if (content.includes('learn') || content.includes('skill')) return 'skill development';
+    
+    // Default fallback
+    return 'this topic';
   };
 
   const handleComponentSelect = (component: ScriptComponent) => {
